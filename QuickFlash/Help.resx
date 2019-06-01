@@ -139,7 +139,9 @@ The Console will display specific steps and whether or not they are successful t
 
 To Flash magic drives, all that is needed is to press the start button. The folder location will need to be added manually in the preferences file. This is done this way(atleast temporarily) because the location should never change and therefor having the option may cause problems.
 
-For any further questions please email Nathan Laning at nathan.laning@logicsupply.com
+The "Manually Select Boot Option" removes the automatic recognition of the boot type based on the files being moved in, if this is a required for any reason please inform the current maintaner of this program to add or adjust parameters to select the correct type.
+
+ For any further questions please email Nathan Laning at nathan.laning@logicsupply.com
 </value>
   </data>
 </root>

@@ -9,43 +9,111 @@ namespace QuickFlash
     public partial class MainWindow : Form
 
     {
-        double increment = 0;
-        String path = @"C:\";
-        string magicDrivePath = "";
-        List<string> drives = new List<String>();
-        List<string> driveType = new List<String>();
-        string fullPath = "";
-        string preferencesFile = "pref.txt";
-        DriveInfo[] allDrives;
-        String version = "1.04";
-        
+        double increment = 0;//for use in progress bar
+        String path = @"C:\";//starting path, probably could be removed...
+        string magicDrivePath = "";//for use in magic drives
+        string fullPath = "";//full path of file being moved
+        string preferencesFile = "pref.txt";//just incase a name change is necessary
+        String version = "1.07";//probably should be replaced for proper versioning...
+         /* Main Window
+         * first opening the program, (like main)
+         * */
         public MainWindow()
         {
             InitializeComponent();
-            
-            //Manual select button, full log, and help temporarily disabled until implemented
-            manualBootSelectButton.Enabled = false;
-            fullLogButton.Enabled = false;
-            //end
             this.Text = "QuickFlash " + version;
             console.Text += "Welcome to Quick Flash! (" + version + ")\nPlease select a file to begin or press " + '"' + "help" + '"' + "\n";
-
             loadPreferences("Pref.txt");
-            ListDirectory(fileViewer, path);
+           listDirectory(fileViewer, path);
         }
-        //string to bool
-        //converts plain text into boolean values
-        // importantly it only looks for "true" and assumes all else is false
-        private bool stringToBool(string s)
+        /*start Click
+         *   ________________
+         *  /               /----. 
+         * /_______________/____/01101010010100101010010101
+         * |_______________|----'
+         * 
+        *where all the magic starts, executes a series of methods to
+        *flash, clean, and move files onto all plugged in thumbdrives
+        **/
+        private void startClick(object sender, EventArgs e)
         {
-            return s.ToLower().Equals("true");
+
+            //getting actual location of files to verify size
+            console.Text += "building pathway\n";
+            string[] pathParts = path.Split('\\');
+            fullPath = "";
+            for (int i = 0; i < pathParts.Length - 1; i++)
+            {
+                fullPath += pathParts[i];
+                fullPath += '\\';
+            }
+            fullPath += fileViewer.SelectedNode.FullPath;
+            //determining the boot option
+
+            string InstallerType = determineType();
+            console.Text += InstallerType + " Selected as boot type\n";
+            //if no option selected quit operation entirely
+            progressBar.Value = 5;
+            Application.DoEvents();
+            //gets all thumbdrives and starts the proccess, making vars aswell
+            DriveInfo[] allDrives = DriveInfo.GetDrives();
+            console.Text += "Flash Initiated, DO NOT remove thumdrives\n";
+            int drive = 0;
+
+            int thumbdrives = 0;
+            //increments through all drives
+            foreach (DriveInfo D in allDrives)
+            {
+                //determine if thumbdrive
+                if (D.DriveType.ToString().Equals("Removable"))
+                {
+                    thumbdrives++;
+                    //gather info
+                    string driveLetter = D.Name.ToString().Remove(2);
+                    string driveFormat = D.DriveFormat;
+                    //if format type doesnt match, flash drive
+                    if (driveFormat != "FAT32")
+                    {
+                        console.Text += "Formating Drive " + driveLetter + "...\n";
+                        formatDrive(driveLetter, drive.ToString());
+                    }
+                    if (alwaysCleanButton.Checked && InstallerType != "DOS")
+                    {
+                        console.Text += "Cleaning drive " + driveLetter + " as requested\n";
+                        cleanDrive(driveLetter);
+                    }
+                    console.Text += "loading drive " + driveLetter + " with necesary components...\n";
+                    //loading drive with components
+                    loadDrive(driveLetter, InstallerType, drive.ToString());
+                }
+                drive++;
+            }
+            console.Text += "Finishing up...\n";
+            //finishing up, waits for cmd to stop proccessing
+
+            int currentlyRunning = Process.GetProcessesByName("cmd").Length;
+            int largestAmount = currentlyRunning;
+            while (currentlyRunning > 0)
+            {
+                //loading bar stuff
+                if (currentlyRunning > largestAmount) largestAmount = currentlyRunning;
+                progressBar.Value = (int)(5 + (90 - 90 * (currentlyRunning / largestAmount)));
+                Application.DoEvents();
+                //checking
+                currentlyRunning = Process.GetProcessesByName("cmd").Length;
+            }
+            progressBar.Value = 100;
+            console.Text += "Process Complete!\n";
+
         }
+        
         /*load preferences
          * loads preferences from specified file in txt format
-         * the default for this instance is pref.txt
+         * the default for this instance is pref.txt (see above)
          * it then uses the data to populate a very specific set of variables
          * this allows any user to alter settings easily outside of the program
          * incase of an in-operable state
+         * really could use some try/catching incase of broken or misplaced file
          * */
         private void loadPreferences(string file)
         {
@@ -98,7 +166,7 @@ namespace QuickFlash
                 //,
                // "driveNumber?"+driveNumber.ToString()
             };
-            CreateFile(preferencesFile, preferences);
+            createFile(preferencesFile, preferences);
         }
         //basic folder browser dialogue to select new root folder
         private void browseForFolder(object sender, EventArgs e)
@@ -108,16 +176,38 @@ namespace QuickFlash
             {
                 console.Text += "New directory selected at:\n" + folderBrowser.SelectedPath + "\n";
                 path = folderBrowser.SelectedPath;
-                ListDirectory(fileViewer, path);
+                listDirectory(fileViewer, path);
             }
         }
-
+        /*
+         * Flash Magic Drives
+         *
+         * Moves necessary files to magic drives, DOES NOT format them, in other words
+         * this will not create new magic drives, just updates current ones. this is done to save immense time since
+         * creating a new one everytime would require formatting and diskpart doesnt like running in multiple instances 
+         * therefor the slowdown would be immense
+         * 
+         * Furthermore the directory is manually placed into the preferences file (pref.txt)
+         * this is to prevent tampering as theoretically this directory will never change
+         * 
+         * */
         private void flashMagicFlashDrives(object sender, EventArgs e)
         {
+            //checking location exist
             if (!magicDrivePath.Equals(""))
             {
-                allDrives = DriveInfo.GetDrives();
+                //find folder to copy
+                List<string> directories = new List<string>(Directory.EnumerateDirectories(magicDrivePath));
+                string folder = "";
+                foreach (string directory in directories)
+                {
+                    string[] dir = directory.Split('\\');
+                    string name = dir[dir.Length - 1];
+                    if (name.Split('_').Length > 1) magicDrivePath = directory;
+                }
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
                 console.Text += "Gathering Magic Flash Drives...\n";
+                int drive = 0;
                 foreach (DriveInfo D in allDrives)
                 {
                     //determine if thumbdrive
@@ -127,149 +217,133 @@ namespace QuickFlash
                         string driveLetter = D.Name.ToString().Remove(2);
                         console.Text += "loading Magic Drive " + driveLetter + " with necesary components...\n";
                         //loading drive with components
+                        loadDrive(driveLetter, "DOS", drive.ToString());
                         if (fullLogButton.Checked) console.Text += "moving files from " + fullPath + " ...\n";
-                        string[] cmd = { @"xcopy " + '"' + magicDrivePath + '\\' + "*" + '"' + " " + driveLetter + @" /e /h /i /y /c >log.txt" };
-                        CreateFile("copy.bat", cmd);
-                        runBATFile("copy.bat");
+                        string[] cmd = { @"xcopy " + '"' + magicDrivePath + '\\' + "*" + '"' + " " + driveLetter + @" /e /h /i /y /c >log"+driveLetter.Split(':')[0] + ".txt" };
+                        createFile("copy"+driveLetter.Split(':')[0]+".bat", cmd);
+                        runBATFile("copy" + driveLetter.Split(':')[0] +".bat", false);
 
                     }
+                    drive++;
                 }
+                console.Text += "Finishing up...\n";
+                //finishing up, waits for cmd to stop proccessing
+
+                int currentlyRunning = Process.GetProcessesByName("cmd").Length;
+                int largestAmount = currentlyRunning;
+                while (currentlyRunning > 0)
+                {
+                    //loading bar stuff
+                    if (currentlyRunning > largestAmount) largestAmount = currentlyRunning;
+                    progressBar.Value = (int)(5 + (90 - 90 * (currentlyRunning / largestAmount)));
+                    Application.DoEvents();
+                    //checking
+                    currentlyRunning = Process.GetProcessesByName("cmd").Length;
+                }
+                progressBar.Value = 100;
+                console.Text += "Magic Drives ready!\n";
             }
             else { console.Text += "Magic Flash Drive directory is not yet saved\nPlease add the directory path to pref.txt\n"; }
         }
 
 
-        /*start Click
-        *where all the magic starts, executes a series of methods to
-        *flash, clean, and move files onto all plugged in thumbdrives
-        **/
-        private void startClick(object sender, EventArgs e)
-        {
-
-            
-            //getting actual location of files to verify size
-            console.Text += "building pathway\n";
-            string[] pathParts = path.Split('\\');
-            fullPath = "";
-            for (int i = 0; i < pathParts.Length - 1; i++)
-            {
-                fullPath += pathParts[i];
-                fullPath += '\\';
-            }
-            fullPath += fileViewer.SelectedNode.FullPath;
-            //defaulting the format type as we only want ntfs if uefi boot is used
-            string FormatType = "FAT32";
-            //determining the boot option
-            string InstallerType = determineType();
-            //if no option selected quit operation entirely
-            if (InstallerType != "NONE")
-            {
-                progressBar.Value = 5;
-                //if uefi, flash as ntfs bootable
-                if (InstallerType == "UEFI") FormatType = "NTFS";
-                //gets all thumbdrives and starts the proccess, making vars aswell
-                allDrives = DriveInfo.GetDrives();
-                console.Text += "Flash Initiated\n";
-                int drive = 0;
-                increment = allDrives.Length / 95.0;
-                if (alwaysCleanButton.Checked) increment /= 2.0;
-                //increments through all drives
-                foreach (DriveInfo D in allDrives)
-                {
-                    //determine if thumbdrive
-                    if (D.DriveType.ToString().Equals("Removable"))
-                    {
-                        //gather info
-                        string driveLetter = D.Name.ToString().Remove(2);
-                        string driveFormat = D.DriveFormat;
-                        //if format type doesnt match, flash drive
-                        if (driveFormat != FormatType)
-                        {
-                            console.Text += "Cleaning and Formating Drive " + driveLetter + "...\n";
-                            cleanDrive(driveLetter, drive.ToString(), FormatType);
-                        }
-                        console.Text += "loading drive " + driveLetter + " with necesary components...\n";
-                        //loading drive with components
-                        loadDrive(driveLetter, InstallerType);
-                    }
-                    progressBar.Value += (int)increment;
-                    Application.DoEvents();
-                    drive++;
-                }
-                //finishing up
-                progressBar.Value = 100;
-                console.Text += "Process Complete!\n";
-            }
-            else console.Text += "Incorrect/no boot method selected\n";
-
-        }
-        /**
+        
+        /*
          * determine Type 
          * determines given the file(s) selected how the software 
          * should behave, looking for four main cases:
-         * 1: no files or too large of file(s) tripping a request to pick a new directory
+         * 1: no files or too large of file(s) tripping a request to pick a new directory <--- still working on this!
          * 2: determines the directory to be of DOS importance
          * 3: determines the directory to be of EFI importance
          * 4: determines the directory to be of INSTANT importance
          * 5: an undetermined state by which the user will need to select the the type
          * these will output strings in the order following above
-         * "NONE","DOS","EFI","INSTANT"
-         * the final option will be up to the user to determine the type (only operable option currently)
+         * "DOS","EFI","INSTANT"
          **/
         private string determineType()
         {
-            //browse all files on drive
-            //look for EFI(ntfs),BAT(DOS),EXE(DOS) or neither for instant. if both, query a select
-
-            //query
-            using (var form = new QueryDriveType())
+            string returnValue = "Instant";
+            bool DOS = false;
+            bool UEFI = false;
+            //browse all files on drive;
+            //look for EFI(uefi),BAT or EXE(DOS), or neither for instant. if both, query a select
+            List<string> directories = new List<string>(Directory.EnumerateDirectories(fullPath));
+            List<string> files = new List<string>(Directory.EnumerateFiles(fullPath));
+            foreach(string directory in directories)
             {
-                if (form.ShowDialog() == DialogResult.OK)
+                string[] dir = directory.Split('\\');
+                string name = dir[dir.Length - 1].ToLower();
+                if (name.Equals("efi")) UEFI = true;
+                if (name.ToLower().Equals("dos")) DOS = true;
+            }
+            foreach (string file in files)
+            {
+                string[] f = file.Split('\\');
+                string extension = (f[f.Length - 1].Split('.'))[1].ToLower();
+                if (extension.Equals("bat")|| extension.Equals("exe")) DOS = true;
+                if (extension.Equals("efi")) UEFI = true;
+            }
+            if (DOS)
+            {
+                returnValue = "DOS";
+            }
+            if (UEFI)
+            {
+                returnValue = "UEFI";
+            }
+            if ((DOS && UEFI)||manualBootSelectButton.Checked)
+            {
+                using (var form = new QueryDriveType())
                 {
-                    return form.returnValue;
+                    if (form.ShowDialog() == DialogResult.OK)
+                    {
+                        returnValue = form.returnValue;
+                    }
                 }
             }
-            return "NONE";
+            
+            return returnValue;
         }
-        private void displayHelp(object sender, EventArgs e)
+        
+        /*loads drives differently depending on type and style
+         * takes a drive, type and drive number, i.e
+         * loadDDrive("D:","DOS","2")
+         * */
+        private void loadDrive(string drive, string Type,string number)
         {
-            var form = new Help();
-            form.Show();
-        }
-        //loads drives differently depending on type and style
-        private void loadDrive(string drive, string Type)
-        {
-            if (alwaysCleanButton.Checked || Type.Equals("INSTANT"))
-            {
-                clearDrive(drive);
-            }
             if (Type.Equals("DOS"))
             {
+                activateDrive(drive,number);
                 DOSBoot(drive);
             }
             if (Type.Equals("UEFI"))
             {
-                UEFIBoot(drive);
+                activateDrive(drive,number);
             }
             copySelectedFile(drive);
 
         }
-
+        /* Copy Selected File
+         * copies the selected path, for excclusive use, could be either improved
+         * to be more generic or depricated completely infavor of on use cases
+         * takes a Drive Variable (i.e "D:")
+         * */
         private void copySelectedFile(string drive)
         {
             if (fullLogButton.Checked) console.Text += "moving files from " + fullPath + " ...\n";
             string folderToMove = fullPath;
-            string[] cmd = { @"xcopy " + '"' + folderToMove + '\\' + "*" + '"' + " " + drive + @" /e /h /i /y /c >log.txt" };
-            CreateFile("copy.bat", cmd);
-            runBATFile("copy.bat");
+            string[] cmd = { @"xcopy " + '"' + folderToMove + '\\' + "*" + '"' + " " + drive + @" /e /h /i /y /c >log"+drive.Split(':')[0]+".txt" };
+            drive = drive.Split(':')[0];
+            createFile("copy"+drive+".bat", cmd);
+            runBATFile("copy" + drive +".bat", false);
 
         }
-        private void UEFIBoot(string drive)
-        {
-            //make bootable...
-            //copying files....
-        }
-
+        /* DOS Boot
+         * 
+         * Deploys DOS and makes it bootable on the drive specified
+         * i.e. "D:"
+         * 
+         * */
         private void DOSBoot(string drive)
         {
             string[] batchLines = {
@@ -280,22 +354,40 @@ namespace QuickFlash
                 "cd..",
                 "cd..",
                 @"xcopy DOS\* " +drive+@" /e /h /i /y /c"};
-            CreateFile("DOS.bat", batchLines);
-            runBATFile("DOS.bat");
+            drive = drive.Split(':')[0];
+            createFile("DOS" + drive +".bat", batchLines);
+            runBATFile("DOS" + drive +".bat", false);
         }
-        private void cleanDrive(string letter, string number, string type)
+        /*Activate Drive 
+         * sets the drive to be active (bootable) its an easy enough operation 
+         * that its typically run always just in case
+        **/
+        private void activateDrive(string drive, string number)
         {
-            string partitionStyle = "";
-            if (type.Equals("FAT32")) {
-                partitionStyle = "convert mbr";
-            }
-            if (type.Equals("NTFS"))
-            {
-                partitionStyle = "convert gpt";
-            }
             string[] batchLines = {
                 "pushd %~dp0",
-                "diskpart /s clean.txt > cleanlog.txt" };
+                "diskpart /s activate"+drive+".txt > activatelog"+drive.Split(':')[0]+".txt" };
+            string[] textLines = {
+                "select disk " + number,
+                "select partition 1",
+                "active" };
+            drive = drive.Split(':')[0];
+            createFile("activate" + drive +".txt", textLines);
+            createFile("activate" + drive +".bat", batchLines);
+            runBATFile("activate" + drive +".bat", false);
+        }
+        /*Foramt Drive
+         * Formats the drive in question, this will (hopefully) be rarely 
+         * necessary as most drives are already fat32's that are mbr
+         * takes a drive letter and number i.e. "D:","2"
+         * 
+         **/
+        private void formatDrive(string letter, string number)
+        {
+            string partitionStyle = "convert mbr";
+            string[] batchLines = {
+                "pushd %~dp0",
+                "diskpart /s clean"+number+".txt > cleanlog"+number+".txt" };
             string[] textLines = {
                 "select disk " + number,
                 "clean",
@@ -303,33 +395,45 @@ namespace QuickFlash
                 "create partition primary",
                 "select partition 1",
                 "active",
-                "format fs =" + type + " quick",
+                "format fs = fat32 quick",
                 "assign letter=",letter.Remove(1) };
-            CreateFile("clean.txt", textLines);
-            CreateFile("clean.bat", batchLines);
-            runBATFile("clean.bat");
+            createFile("clean" + number + ".txt", textLines);
+            createFile("clean" + number + ".bat", batchLines);
+            runBATFile("clean" + number + ".bat",true);
             if (fullLogButton.Checked)
             {
-                outputLog("cleanlog.txt", 6);
+                outputLog("cleanlog" + number + ".txt", 6);
             }
 
 
         }
-
-        private void clearDrive(string drive)
+        /* Clean Drive
+         * Cleans all files off of the drive in question, this can be helpful when
+         * loading two different versions of the same bios on one drive and is instigated
+         * using the "always clean" button
+         * 
+         * */
+        private void cleanDrive(string drive)
         {
             progressBar.Value += (int)increment;
             Application.DoEvents();
-            console.Text += "clearing out files on drive...\n";
+            console.Text += "clearing out files on drive "+drive+"...\n";
             string[] cmd =
             {
                 "del "+drive+@"\* /s /q",
                 "rmdir /s/q "+drive
             };
-            CreateFile("clear.bat", cmd);
-            runBATFile("clear.bat");
+            drive = drive.Split(':')[0];
+            createFile("clear" + drive + ".bat", cmd);
+            runBATFile("clear" + drive +".bat",false);
         }
-
+        /* Output Log
+         * outputs a specified log to the console, typically only used when
+         * the "show full log" option is selected, and can be used to view progress or errors
+         * takes a file and a line starting point to avoid uneccesary headers
+         * i.e. "log.txt",4
+         * 
+         * */
         private void outputLog(string file, int start)
         {
             if (File.Exists(file))
@@ -341,21 +445,20 @@ namespace QuickFlash
                 }
             }
         }
+        //Scrolls console automatically to keep the most relevent info visable
         private void consoleTextChanged(object sender, EventArgs e)
         {
-            // set the current caret position to the end
             console.SelectionStart = console.Text.Length;
-            // scroll it automatically
             console.ScrollToCaret();
         }
-        private void moveFile()
-        {
-
-            runBATFile("Copy.bat");
-
-        }
-
-        private void runBATFile(string filename)
+        /* Run BAT file
+         * Runs a specified BAT file in the background, it is also capable of waiting for completetion
+         * for programs like diskpart that dont like to be instanced. there is also a manually placed delay 
+         * regardless for similar reasons although cmd has less issues thus the set delay 
+         * takes a filename and a boolean as to whether it needs to wait, i.e
+         * "flash.BAT",true
+         * */
+        private void runBATFile(string filename,bool wait)
         {
             ProcessStartInfo BatchProcess;
             Process process;
@@ -363,9 +466,21 @@ namespace QuickFlash
             BatchProcess.CreateNoWindow = true;
             BatchProcess.UseShellExecute = false;
             process = Process.Start(BatchProcess);
-            process.WaitForExit();
+            if (wait)
+            {
+                process.WaitForExit();
+            }
+            else System.Threading.Thread.Sleep(200);
         }
-        private void CreateFile(String name, String[] lines)
+        /*Create File
+         * Creates a file based on the names and the lines it needs
+         * the lines are in array form to avoid the necessity to add 
+         * \n's to the input allowing for easier visability when using the program
+         * takes a name and the lines i.e.
+         * "file.txt",{"line 1","line 2"}
+         * 
+         * */
+        private void createFile(String name, String[] lines)
         {
 
             if (File.Exists(name))
@@ -379,13 +494,17 @@ namespace QuickFlash
             }
             writer.Close();
         }
-        private void ListDirectory(TreeView treeView, string path)
+        /* Initiates a node tree to access the full specifed directory and all of its children
+         * only cares about directories
+         * takes the TreeView it would like to change, and the path of the specified folder
+         * */
+        private void listDirectory(TreeView treeView, string path)
         {
             try
             {
                 treeView.Nodes.Clear();
                 var rootDirectoryInfo = new DirectoryInfo(path);
-                treeView.Nodes.Add(CreateDirectoryNode(rootDirectoryInfo));
+                treeView.Nodes.Add(createDirectoryNode(rootDirectoryInfo));
             }
             catch (ArgumentException)
             {
@@ -396,7 +515,12 @@ namespace QuickFlash
                 //browseForFolder(this, null);
             }
         }
-        private TreeNode CreateDirectoryNode(DirectoryInfo directoryInfo)
+        /* Create Directory Node
+         * recursively called to populate all available directories (tree)
+         * is just passed the current directory location and branches from there
+         * 
+         * */
+        private TreeNode createDirectoryNode(DirectoryInfo directoryInfo)
         {
             
                 var directoryNode = new TreeNode(directoryInfo.Name);
@@ -404,7 +528,11 @@ namespace QuickFlash
                 {
                 try
                 {
-                    directoryNode.Nodes.Add(CreateDirectoryNode(directory));
+                    TreeNode N = createDirectoryNode(directory);
+                    if (N.Text != "EFI")
+                    {
+                        directoryNode.Nodes.Add(N);
+                    }
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -418,6 +546,22 @@ namespace QuickFlash
             }
             return directoryNode;
             
+        }
+        //string to bool
+        //converts plain text into boolean values
+        // importantly it only looks for "true" and assumes all else is false
+        private bool stringToBool(string s)
+        {
+            return s.ToLower().Equals("true");
+        }
+        /*
+         * Display Help
+         * Does exactly what one might think, deploys a help screen in a new window/form
+         * */
+        private void displayHelp(object sender, EventArgs e)
+        {
+            var form = new Help();
+            form.Show();
         }
     }
 

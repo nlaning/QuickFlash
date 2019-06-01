@@ -26,21 +26,18 @@ namespace QuickFlash
             if (DOS.Checked)
             {
                 returnValue = "DOS";
-                Close();
-                DialogResult = DialogResult.OK;
+                
             }
             if (UEFI.Checked)
             {
                 returnValue = "UEFI";
-                Close();
-                DialogResult = DialogResult.OK;
             }
             if (INSTANT.Checked)
             {
                 returnValue = "Instant";
-                Close();
-                DialogResult = DialogResult.OK;
             }
+            Close();
+            DialogResult = DialogResult.OK;
         }
 
         private void InstantChecked(object sender, EventArgs e)
