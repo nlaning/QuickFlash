@@ -39,8 +39,9 @@ namespace QuickFlash
         String path = @"C:\";//starting path, probably could be removed...
         string magicDrivePath = "";//for use in magic drives
         string fullPath = "";//full path of file being moved
+        long limit;
         string preferencesFile = "pref.txt";//just incase a name change is necessary
-        String version = "1.11";//probably should be replaced for proper versioning...
+        String version = "1.12";//probably should be replaced for proper versioning...
          /* Main Window
          * first opening the program, (like main)
          * */
@@ -63,7 +64,9 @@ namespace QuickFlash
         **/
         private void startClick(object sender, EventArgs e)
         {
-
+           
+            //disable buttons that should not be pushed during proccess
+            buttonEnabler(false);
             //getting actual location of files to verify size
             console.Text += "building pathway\n";
             string[] pathParts = path.Split('\\');
@@ -75,9 +78,30 @@ namespace QuickFlash
             }
             fullPath += fileViewer.SelectedNode.FullPath;
             //determining the boot option
-
+            //gathering file size
+            long fileSize = getFileSize(fullPath);
+            string size = "selected folder is ";
+            if (fileSize > 1000000) {
+                size += (int)(fileSize / 1000000.0) + "mb";
+            }
+            else
+            {
+                size += (int)(fileSize / 1000.0) + "kb";
+            }
+            //estimate time
+            long start = DateTime.Now.Ticks / 10000;//time in ms
+            //stop program if file is too large
+            if (fileSize > limit)
+            {
+                console.Text += "\n"+ (int)(fileSize / 1000000.0) + "mb is too large!\n" +
+                    "Check that you have selected the correct file\n" +
+                    "or adjust the limit in pref.txt";
+                buttonEnabler(true);
+                return;
+            }
+            if(fullLogButton.Checked) console.Text += size+" in size\n";
             string InstallerType = determineType();
-            console.Text += InstallerType + " Selected as boot type\n";
+            if(fullLogButton.Checked) console.Text += InstallerType + " Selected as boot type\n";
             //if no option selected quit operation entirely
             progressBar.Value = 5;
             Application.DoEvents();
@@ -85,9 +109,16 @@ namespace QuickFlash
             DriveInfo[] allDrives = DriveInfo.GetDrives();
             console.Text += "Flash Initiated, DO NOT remove thumdrives\n";
             int drive = 0;
-
             int thumbdrives = 0;
+            // estimate time using previously gathered data
+            //if cleaning time estimate will be much more eradic, this could be adjusted but general time constraints tend to be more useful
+            long bytesPerSecond = 4560000;
+            long totalTime = fileSize / bytesPerSecond;
+            if(InstallerType == "DOS") totalTime+=1;
+            if(alwaysCleanButton.Checked) totalTime += 2;
+            totalTime += 1;//adding one since there is a built in delay for drives attached and the average number of drives would most likely be around 1-4
             //increments through all drives
+            console.Text += "Estimated time: " + totalTime+" sec\n"; 
             foreach (DriveInfo D in allDrives)
             {
                 //determine if thumbdrive
@@ -128,7 +159,10 @@ namespace QuickFlash
                 //checking
                 currentlyRunning = Process.GetProcessesByName("cmd").Length;
             }
+            if (fullLogButton.Checked) console.Text +="Elapsed time: "+ ((DateTime.Now.Ticks / 10000 - start)/1000) +" Sec\n";//time in ms
+            
             progressBar.Value = 100;
+            buttonEnabler(true);
             console.Text += "Process Complete!\n";
 
         }
@@ -168,6 +202,16 @@ namespace QuickFlash
                             magicDrivePath = s.Split('?')[1];
                             
                             break;
+                        case (6):
+                            try{
+                                limit = Convert.ToInt64(s.Split('?')[1]);
+                            }
+                            catch (FormatException )
+                            {
+                                limit = 100000000;
+                                console.Text += "Error in preferences file, the limit is not inputed correctly";
+                            }
+                            break;
                     }
                 }
             }
@@ -188,9 +232,8 @@ namespace QuickFlash
                 "manualBoot?"+manualBootSelectButton.Checked,
                 "fullLog?"+fullLogButton.Checked,
                 "alwaysClean?"+alwaysCleanButton.Checked,
-                "magicDirectory?"+magicDrivePath
-                //,
-               // "driveNumber?"+driveNumber.ToString()
+                "magicDirectory?"+magicDrivePath,
+                "Directorylimit?"+limit
             };
             createFile(preferencesFile, preferences);
         }
@@ -219,6 +262,7 @@ namespace QuickFlash
          * */
         private void flashMagicFlashDrives(object sender, EventArgs e)
         {
+            buttonEnabler(false);
             //checking location exist
             if (!magicDrivePath.Equals(""))
             {
@@ -270,6 +314,7 @@ namespace QuickFlash
                 console.Text += "Magic Drives ready!\n";
             }
             else { console.Text += "Magic Flash Drive directory is not yet saved\nPlease add the directory path to pref.txt\n"; }
+            buttonEnabler(true);
         }
 
 
@@ -445,7 +490,6 @@ namespace QuickFlash
         {
             progressBar.Value += (int)increment;
             Application.DoEvents();
-            console.Text += "clearing out files on drive "+drive+"...\n";
             string[] cmd =
             {
                 "del "+drive+@"\* /s /q",
@@ -682,6 +726,40 @@ namespace QuickFlash
         {
             var form = new Help();
             form.Show();
+        }
+        /*
+         * Button Enabler
+         * enables or disables buttons that are apart of the flashing/moving proccess
+         * this prevents damaging actions 
+         * only needs a boolean to determine enabling or disabling
+         * 
+         * */
+        private void buttonEnabler(bool enabled)
+        {
+            start.Enabled = enabled;
+            FlashMagicDrives.Enabled = enabled;
+            savePref.Enabled = enabled;
+            changeRootDirectoryButton.Enabled = enabled;
+        }
+
+        /* Get Files
+         * gathers information from the files, and returns the total size in bytes
+         * 
+         * */
+         private long getFileSize(string path)
+        {
+            List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
+            List<string> files = new List<string>(Directory.EnumerateFiles(path));
+            long total = 0;
+            foreach(string file in files)
+            {
+                total += new FileInfo(file).Length;
+            }
+            foreach(string directory in directories)
+            {
+                total += getFileSize(directory);
+            }
+                return total;
         }
     }
 
