@@ -1,0 +1,5 @@
+rootDirectory?C:\BIOS Updates
+manualBoot?False
+fullLog?True
+alwaysClean?True
+magicDirectory?C:\bios updates\Magic Flash Drive

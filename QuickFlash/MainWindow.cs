@@ -1,4 +1,30 @@
-﻿using System;
+﻿/*
+ *
+ *                                          /===============\
+ *>=====================================:~ /  ~Quick Flash~  \ ~:==========================================
+ *                                        /===================\
+ *  
+ * Quick Flash is a program designed around greatly increasing the amount of time it takes someone to
+ * flash multiple thumbdrives for holding a BIOS update. It achieves this in these major ways:
+ * 
+ * -> Allows a clean user interface to easily select BIOS updates either standard or custom
+ * -> Automatatically selects the boot method based on the selected folder structure (DOS,UEFI, or Instant)
+ * -> Is capable of recognizing when a drive is need of formatting, and formatting it
+ * -> Is capable of doing multiple drives simultaneously to greatly reduce time spent moving files
+ * -> Is capable of updating current magic thumbdrives simultaneously
+ * 
+ * It can achieve all of this by leveraging built in Windows tools, doing away with any need for extermal 
+ * sources or programs. It uses CMD and DISKPART, and is capable of creating, running, and gathering logs 
+ * from both of these programs. the Majority of the UI was used in the Visual Studio enviornment and much 
+ * of the UI code was therefore generated, the majority of my work relies within this file itself. For more
+ * in depth of the innerworkings one would need to browse the various methods.
+ * 
+ * Quick Flash was created and is Property of myself, Nathan Laning, and was soley created for use by 
+ * ONLogic, therefor is not for sale and cannot be used outside the scope of ONLogic without direct consent.
+ * 
+ * Please Email myself directly or whomever may be maintaning this code for any questions or concerns
+ **/
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,7 +40,7 @@ namespace QuickFlash
         string magicDrivePath = "";//for use in magic drives
         string fullPath = "";//full path of file being moved
         string preferencesFile = "pref.txt";//just incase a name change is necessary
-        String version = "1.07";//probably should be replaced for proper versioning...
+        String version = "1.11";//probably should be replaced for proper versioning...
          /* Main Window
          * first opening the program, (like main)
          * */
@@ -26,14 +52,14 @@ namespace QuickFlash
             loadPreferences("Pref.txt");
            listDirectory(fileViewer, path);
         }
-        /*start Click
+        /* Start Click
          *   ________________
          *  /               /----. 
          * /_______________/____/01101010010100101010010101
          * |_______________|----'
          * 
-        *where all the magic starts, executes a series of methods to
-        *flash, clean, and move files onto all plugged in thumbdrives
+        *  where all the magic happens, executes a series of methods to
+        *  flash, clean, and move files onto all plugged in thumbdrives
         **/
         private void startClick(object sender, EventArgs e)
         {
@@ -315,6 +341,7 @@ namespace QuickFlash
             {
                 activateDrive(drive,number);
                 DOSBoot(drive);
+                generateAUTOEXEC(drive);
             }
             if (Type.Equals("UEFI"))
             {
@@ -356,7 +383,8 @@ namespace QuickFlash
                 @"xcopy DOS\* " +drive+@" /e /h /i /y /c"};
             drive = drive.Split(':')[0];
             createFile("DOS" + drive +".bat", batchLines);
-            runBATFile("DOS" + drive +".bat", false);
+            runBATFile("DOS" + drive +".bat", true);
+
         }
         /*Activate Drive 
          * sets the drive to be active (bootable) its an easy enough operation 
@@ -450,6 +478,98 @@ namespace QuickFlash
         {
             console.SelectionStart = console.Text.Length;
             console.ScrollToCaret();
+        }
+        /* Generate AUTOEXEC
+         * Creates an AUTOEXEC batch file to automate or make choosing a file without typing
+         * It searches through the directory to determine other batch files that are canidates
+         * if the list has none, it errors out, if there is just 1, it runs it, if more then 1
+         * it will prompt the user for an answer
+         **/
+         private void generateAUTOEXEC(string driveLetter)
+        {
+            if (fullLogButton.Checked)
+            {
+                console.Text += "Generating AUTOEXEC for DOS bootable\n";
+            }
+            //default output
+            string[] contents = { "@echo off","cls",
+                "echo No Batch or Executable Files Found on Drive, type DIR to get a list of the directory as you may need to navigate to a different directory" };
+            List<string> files = new List<string>(Directory.EnumerateFiles(fullPath));
+            List<string> selectedFiles = new List<string>();
+            foreach (string file in files)
+            {
+                string[] f = file.Split('\\');
+                string extension = (f[f.Length - 1].Split('.'))[1].ToLower();
+                if (extension.Equals("bat") || extension.Equals("exe")) selectedFiles.Add(f[f.Length - 1].ToLower());
+            }
+            //if only one bat file, runs it
+            if (selectedFiles.Count == 1)
+            {
+                contents = new string[]{ "@echo off","cls",
+                    "echo running " + selectedFiles[0],"CALL "+ selectedFiles[0]};
+            }
+            //if more then one file, but less then 10
+            if (selectedFiles.Count < 9 && selectedFiles.Count > 1)
+            {
+                List<string> contentsList = new List<string>();
+                contentsList.Add("@echo off");
+                contentsList.Add("cls");
+                contentsList.Add("echo press the number of the file you would like to run or press q to quit");
+                contentsList.Add("echo ===============================");
+                string choice = "choice /C:";
+                //adds the visable options for user to pick through
+                for (int i = 0; i < selectedFiles.Count; i++)
+                {
+                    choice += (i+1).ToString();
+                    contentsList.Add("echo "+(i+1).ToString()+": "+selectedFiles[i]);
+                }
+                contentsList.Add("echo ===============================");
+                contentsList.Add(choice + "q /n");
+                //adds the actual options once selected, choice seems to like numbers in reverse order
+                for (int i = selectedFiles.Count-1; i > -1; i--)
+                {
+                    contentsList.Add("IF ERRORLEVEL = " + (i+1).ToString() + " CALL " + '"'+selectedFiles[i]+'"');
+                }
+                //convert from List to Array for createfile to accept it
+                contents = new string[contentsList.Count];
+                for (int i = 0; i < contentsList.Count; i++)
+                {
+                    contents[i] = contentsList[i];
+                }
+            }
+            //if more then 9, just list options for user to type out
+            if (selectedFiles.Count > 9)
+            {
+                List<string> contentsList = new List<string>();
+                int linesAcross = 3;
+                contentsList.Add("@echo off");
+                contentsList.Add("cls");
+                contentsList.Add("echo Too many files to use choice, please type the file you would like");
+                contentsList.Add("echo =================================================================");
+                for (int i = 0; i < (selectedFiles.Count/ linesAcross) +1; i++) {
+                    string line = "echo ";
+                    int count=0;
+                    for(int j = i * linesAcross; j < selectedFiles.Count; j++)
+                    {
+                        count++;
+                        line += selectedFiles[j].Split('.')[0] + "  ";
+                        if (count == linesAcross) j = selectedFiles.Count;
+                    }
+                    contentsList.Add(line);
+                }
+
+                contentsList.Add("echo =================================================================");
+                //convert from List to Array for createfile to accept it
+                contents = new string[contentsList.Count];
+                for (int i = 0; i < contentsList.Count; i++)
+                {
+                    contents[i] = contentsList[i];
+                }
+            }
+                createFile(driveLetter + @"\autoexec.bat", contents);
+
+
+
         }
         /* Run BAT file
          * Runs a specified BAT file in the background, it is also capable of waiting for completetion
