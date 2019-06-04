@@ -92,7 +92,7 @@ namespace QuickFlash
             this.fileViewer.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.fileViewer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fileViewer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            this.fileViewer.LineColor = System.Drawing.Color.DarkOliveGreen;
+            this.fileViewer.LineColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.fileViewer.Location = new System.Drawing.Point(0, 0);
             this.fileViewer.Name = "fileViewer";
             treeNode1.Name = "Node0";
