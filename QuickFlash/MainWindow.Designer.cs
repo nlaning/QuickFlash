@@ -48,9 +48,9 @@ namespace QuickFlash
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateMagicFlashDrivesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.formatDrivesFAT32ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.outputConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
-            this.outputConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -71,6 +71,7 @@ namespace QuickFlash
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(45)))), ((int)(((byte)(40)))));
             this.splitContainer1.Panel2.Controls.Add(this.fullLogButton);
             this.splitContainer1.Panel2.Controls.Add(this.manualBootSelectButton);
             this.splitContainer1.Panel2.Controls.Add(this.alwaysCleanButton);
@@ -87,10 +88,10 @@ namespace QuickFlash
             this.fileViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.fileViewer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(55)))));
+            this.fileViewer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(65)))), ((int)(((byte)(60)))), ((int)(((byte)(55)))));
             this.fileViewer.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.fileViewer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.fileViewer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.fileViewer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.fileViewer.LineColor = System.Drawing.Color.DarkOliveGreen;
             this.fileViewer.Location = new System.Drawing.Point(0, 0);
             this.fileViewer.Name = "fileViewer";
@@ -150,9 +151,9 @@ namespace QuickFlash
             // console
             // 
             this.console.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)));
-            this.console.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(55)))), ((int)(((byte)(55)))));
+            this.console.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(65)))), ((int)(((byte)(60)))), ((int)(((byte)(55)))));
             this.console.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.console.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.console.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.console.Location = new System.Drawing.Point(1, 229);
             this.console.Name = "console";
             this.console.ReadOnly = true;
@@ -238,16 +239,16 @@ namespace QuickFlash
             this.formatDrivesFAT32ToolStripMenuItem.Text = "Format Drives (FAT32)";
             this.formatDrivesFAT32ToolStripMenuItem.Click += new System.EventHandler(this.FormatDrives);
             // 
-            // folderBrowser
-            // 
-            this.folderBrowser.RootFolder = System.Environment.SpecialFolder.LocalizedResources;
-            // 
             // outputConsoleToolStripMenuItem
             // 
             this.outputConsoleToolStripMenuItem.Name = "outputConsoleToolStripMenuItem";
             this.outputConsoleToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
             this.outputConsoleToolStripMenuItem.Text = "Output Console";
             this.outputConsoleToolStripMenuItem.Click += new System.EventHandler(this.outputConsole);
+            // 
+            // folderBrowser
+            // 
+            this.folderBrowser.RootFolder = System.Environment.SpecialFolder.LocalizedResources;
             // 
             // MainWindow
             // 
