@@ -43,7 +43,6 @@ namespace QuickFlash
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.preferencesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.changeRootDirectoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateMagicFlashDrivesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,6 +50,7 @@ namespace QuickFlash
             this.outputConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
+            this.saveCurrentPresetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -71,7 +71,7 @@ namespace QuickFlash
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(45)))), ((int)(((byte)(40)))));
+            this.splitContainer1.Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(44)))), ((int)(((byte)(40)))));
             this.splitContainer1.Panel2.Controls.Add(this.fullLogButton);
             this.splitContainer1.Panel2.Controls.Add(this.manualBootSelectButton);
             this.splitContainer1.Panel2.Controls.Add(this.alwaysCleanButton);
@@ -88,7 +88,7 @@ namespace QuickFlash
             this.fileViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.fileViewer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(65)))), ((int)(((byte)(60)))), ((int)(((byte)(55)))));
+            this.fileViewer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(56)))), ((int)(((byte)(63)))));
             this.fileViewer.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.fileViewer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fileViewer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
@@ -116,7 +116,7 @@ namespace QuickFlash
             // manualBootSelectButton
             // 
             this.manualBootSelectButton.AutoSize = true;
-            this.manualBootSelectButton.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.manualBootSelectButton.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
             this.manualBootSelectButton.Location = new System.Drawing.Point(38, 165);
             this.manualBootSelectButton.Name = "manualBootSelectButton";
             this.manualBootSelectButton.Size = new System.Drawing.Size(160, 17);
@@ -151,7 +151,7 @@ namespace QuickFlash
             // console
             // 
             this.console.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)));
-            this.console.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(65)))), ((int)(((byte)(60)))), ((int)(((byte)(55)))));
+            this.console.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(56)))), ((int)(((byte)(63)))));
             this.console.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.console.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.console.Location = new System.Drawing.Point(1, 229);
@@ -187,8 +187,8 @@ namespace QuickFlash
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.saveCurrentPresetToolStripMenuItem,
             this.preferencesToolStripMenuItem,
-            this.changeRootDirectoryToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
@@ -197,21 +197,14 @@ namespace QuickFlash
             // preferencesToolStripMenuItem
             // 
             this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
-            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.preferencesToolStripMenuItem.Text = "Change Preferences";
             this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.displayPreferences);
-            // 
-            // changeRootDirectoryToolStripMenuItem
-            // 
-            this.changeRootDirectoryToolStripMenuItem.Name = "changeRootDirectoryToolStripMenuItem";
-            this.changeRootDirectoryToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
-            this.changeRootDirectoryToolStripMenuItem.Text = "Change Root Directory";
-            this.changeRootDirectoryToolStripMenuItem.Click += new System.EventHandler(this.browseForFolder);
             // 
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.helpToolStripMenuItem.Text = "Help";
             this.helpToolStripMenuItem.Click += new System.EventHandler(this.displayHelp);
             // 
@@ -249,6 +242,13 @@ namespace QuickFlash
             // folderBrowser
             // 
             this.folderBrowser.RootFolder = System.Environment.SpecialFolder.LocalizedResources;
+            // 
+            // saveCurrentPresetToolStripMenuItem
+            // 
+            this.saveCurrentPresetToolStripMenuItem.Name = "saveCurrentPresetToolStripMenuItem";
+            this.saveCurrentPresetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveCurrentPresetToolStripMenuItem.Text = "Save Current Preset";
+            this.saveCurrentPresetToolStripMenuItem.Click += new System.EventHandler(this.savePreferences);
             // 
             // MainWindow
             // 
@@ -293,12 +293,12 @@ namespace QuickFlash
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem preferencesToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem changeRootDirectoryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem updateMagicFlashDrivesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem formatDrivesFAT32ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem outputConsoleToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveCurrentPresetToolStripMenuItem;
     }
 }
 

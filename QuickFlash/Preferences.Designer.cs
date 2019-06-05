@@ -38,13 +38,15 @@ namespace QuickFlash
             this.directoryLimitBox = new System.Windows.Forms.TextBox();
             this.applyButton = new System.Windows.Forms.Button();
             this.limitLabel = new System.Windows.Forms.Label();
+            this.selectDirectoryButton = new System.Windows.Forms.Button();
+            this.folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
             this.SuspendLayout();
             // 
             // rootDirectoryBox
             // 
             this.rootDirectoryBox.Location = new System.Drawing.Point(180, 22);
             this.rootDirectoryBox.Name = "rootDirectoryBox";
-            this.rootDirectoryBox.Size = new System.Drawing.Size(144, 20);
+            this.rootDirectoryBox.Size = new System.Drawing.Size(112, 20);
             this.rootDirectoryBox.TabIndex = 0;
             // 
             // label1
@@ -73,7 +75,7 @@ namespace QuickFlash
             // 
             this.magicDirectoryBox.Location = new System.Drawing.Point(180, 63);
             this.magicDirectoryBox.Name = "magicDirectoryBox";
-            this.magicDirectoryBox.Size = new System.Drawing.Size(144, 20);
+            this.magicDirectoryBox.Size = new System.Drawing.Size(143, 20);
             this.magicDirectoryBox.TabIndex = 3;
             // 
             // label3
@@ -116,12 +118,31 @@ namespace QuickFlash
             this.limitLabel.TabIndex = 7;
             this.limitLabel.Text = "Whole Number Required!";
             // 
+            // selectDirectoryButton
+            // 
+            this.selectDirectoryButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.selectDirectoryButton.FlatAppearance.BorderSize = 0;
+            this.selectDirectoryButton.Location = new System.Drawing.Point(297, 22);
+            this.selectDirectoryButton.Name = "selectDirectoryButton";
+            this.selectDirectoryButton.Size = new System.Drawing.Size(26, 21);
+            this.selectDirectoryButton.TabIndex = 8;
+            this.selectDirectoryButton.Text = "...";
+            this.selectDirectoryButton.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.selectDirectoryButton.TextImageRelation = System.Windows.Forms.TextImageRelation.TextAboveImage;
+            this.selectDirectoryButton.UseVisualStyleBackColor = true;
+            this.selectDirectoryButton.Click += new System.EventHandler(SelectDirectory);
+            // 
+            // folderBrowser
+            // 
+            this.folderBrowser.RootFolder = System.Environment.SpecialFolder.LocalizedResources;
+            // 
             // Preferences
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
             this.ClientSize = new System.Drawing.Size(351, 188);
+            this.Controls.Add(this.selectDirectoryButton);
             this.Controls.Add(this.limitLabel);
             this.Controls.Add(this.applyButton);
             this.Controls.Add(this.directoryLimitBox);
@@ -155,5 +176,7 @@ namespace QuickFlash
         private System.Windows.Forms.TextBox directoryLimitBox;
         private System.Windows.Forms.Button applyButton;
         private System.Windows.Forms.Label limitLabel;
+        private System.Windows.Forms.Button selectDirectoryButton;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowser;
     }
 }

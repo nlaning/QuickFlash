@@ -293,7 +293,7 @@ namespace QuickFlash
             }
             //find folder to copy
             List<string> directories = new List<string>(Directory.EnumerateDirectories(magicDrivePath));
-            string folder = "";
+            //string folder = "";
             foreach (string directory in directories)
             {
                 string[] dir = directory.Split('\\');
@@ -765,7 +765,9 @@ namespace QuickFlash
                     path = form.newBiosLocation;
                     magicDrivePath = form.newMagicLocation;
                     limit = form.newByteLimit;
+                    listDirectory(fileViewer, path);
                     savePreferences(this,null);
+                    
                 }
             }
         }
@@ -782,7 +784,7 @@ namespace QuickFlash
             start.Enabled = enabled;
             updateMagicFlashDrivesToolStripMenuItem.Enabled = enabled;
             preferencesToolStripMenuItem.Enabled = enabled;
-            changeRootDirectoryToolStripMenuItem.Enabled = enabled;
+            saveCurrentPresetToolStripMenuItem.Enabled = enabled;
             updateMagicFlashDrivesToolStripMenuItem.Enabled = enabled;
         }
         /*Output Console

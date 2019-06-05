@@ -1,0 +1,6 @@
+rootDirectory?
+manualBoot?False
+fullLog?False
+alwaysClean?False
+magicDirectory?
+Directorylimit?200000000

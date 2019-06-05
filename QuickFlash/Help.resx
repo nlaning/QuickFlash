@@ -127,19 +127,17 @@
     <value>
 Welcome to Quick Flash!
 
-To begin, select a BIOS folder that you would like to upload, then press "Flash Drives". You will then be prompted for the type of drive you would like to create. Then once completely finished you may remove the drives.
+To begin, select a BIOS folder that you would like to upload, then press "Flash Drives". Then once completely finished you may remove the drives.
 
-To select the directory you would like to use please press the "Change Root Directory" button, note that network drives are not directly accessible without first making a local link manually. 
+To select the directory you would like to use please press the "Change Root Directory" button within the options, note that network drives are not directly accessible without first making a local link manually or manually adding the address in the preferences editor.
 
-The "Always Clean Drives" button will clear all files of all the drives before adding the files, and should generally be used to avoid conflicts when booting, but note that this does not neccessarily mean that all data on the drives will be preserved
+The "Always Clean Drives" check box will clear all files off of all the drives before adding the new files. But note that this is rarely necessary and only should be used when expierencing booting problems.
 
-Saving your preferences primarily saves the directory you are currently using, and all of the selected boxes. Its setup in this fashion to easily change settings from the preferences file itself.
+The Console will display specific steps and whether or not they are successful to indicate errors to the user for reporting. The full log option will display more running information if it is required.
 
-The Console will display specific steps and whether or not they are successful to indicate errors to the user for reporting. Eventually this will be able to be flagged for whether or not it displays all the information or just when there is a problem.
+To Update Magic Drives, Insert all the drives and click the associated tool in the tools bar. Note that a location for these files will need to be added manually.
 
-To Flash magic drives, all that is needed is to press the start button. The folder location will need to be added manually in the preferences file. This is done this way(atleast temporarily) because the location should never change and therefor having the option may cause problems.
-
-The "Manually Select Boot Option" removes the automatic recognition of the boot type based on the files being moved in, if this is a required for any reason please inform the current maintaner of this program to add or adjust parameters to select the correct type.
+The "Manually Select Boot Option" removes the automatic recognition of the boot type based on the files being moved in, if this is a required for any reason please inform the current maintaner of this program to add or adjust parameters to select the correct type normally
 
  For any further questions please email Nathan Laning at nathan.laning@logicsupply.com
 </value>

@@ -39,5 +39,16 @@ namespace QuickFlash
             }
             
         }
+
+        private void SelectDirectory(object sender, EventArgs e)
+        {
+            DialogResult result = folderBrowser.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                newBiosLocation = folderBrowser.SelectedPath;
+                rootDirectoryBox.Text= newBiosLocation;
+            }
+            else return;
+        }
     }
 }
