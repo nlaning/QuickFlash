@@ -34,6 +34,9 @@
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>drive_256.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -126,6 +129,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\Debug\flash.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="drive.ico" />
+    <Content Include="drive_256.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
