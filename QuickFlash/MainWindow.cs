@@ -643,13 +643,21 @@ namespace QuickFlash
          * */
         private List<string> getFilePath(string path)
         {
+            
             List<string> allFiles = new List<string>();
-            List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
-            List<string> files = new List<string>(Directory.EnumerateFiles(path));
-            allFiles.AddRange(files);
-            foreach (string directory in directories)
+            try
             {
-                allFiles.AddRange(getFilePath(directory));
+                List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
+                List<string> files = new List<string>(Directory.EnumerateFiles(path));
+                allFiles.AddRange(files);
+                foreach (string directory in directories)
+                {
+                    allFiles.AddRange(getFilePath(directory));
+                }
+            }
+            catch
+            {
+                console.Text += "Error gathering path: " + path + "\n";
             }
             return allFiles;
         }
