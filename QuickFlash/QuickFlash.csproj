@@ -115,5 +115,17 @@
   <ItemGroup>
     <None Include="bin\Debug\help.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\logo-tile.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\flash.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

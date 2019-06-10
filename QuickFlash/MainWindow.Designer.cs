@@ -37,11 +37,11 @@ namespace QuickFlash
             this.fullLogButton = new System.Windows.Forms.CheckBox();
             this.manualBootSelectButton = new System.Windows.Forms.CheckBox();
             this.alwaysCleanButton = new System.Windows.Forms.CheckBox();
-            this.start = new System.Windows.Forms.Button();
             this.console = new System.Windows.Forms.RichTextBox();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveCurrentPresetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.preferencesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -50,7 +50,7 @@ namespace QuickFlash
             this.outputConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
-            this.saveCurrentPresetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.start = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -62,6 +62,7 @@ namespace QuickFlash
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
+            this.splitContainer1.IsSplitterFixed = true;
             this.splitContainer1.Location = new System.Drawing.Point(0, 0);
             this.splitContainer1.Name = "splitContainer1";
             // 
@@ -71,7 +72,7 @@ namespace QuickFlash
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(44)))), ((int)(((byte)(40)))));
+            this.splitContainer1.Panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(82)))), ((int)(((byte)(69)))), ((int)(((byte)(58)))));
             this.splitContainer1.Panel2.Controls.Add(this.fullLogButton);
             this.splitContainer1.Panel2.Controls.Add(this.manualBootSelectButton);
             this.splitContainer1.Panel2.Controls.Add(this.alwaysCleanButton);
@@ -88,11 +89,11 @@ namespace QuickFlash
             this.fileViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.fileViewer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(56)))), ((int)(((byte)(63)))));
+            this.fileViewer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(39)))), ((int)(((byte)(46)))));
             this.fileViewer.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.fileViewer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fileViewer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            this.fileViewer.LineColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.fileViewer.LineColor = System.Drawing.Color.FromArgb(((int)(((byte)(82)))), ((int)(((byte)(88)))), ((int)(((byte)(102)))));
             this.fileViewer.Location = new System.Drawing.Point(0, 0);
             this.fileViewer.Name = "fileViewer";
             treeNode1.Name = "Node0";
@@ -105,10 +106,11 @@ namespace QuickFlash
             // fullLogButton
             // 
             this.fullLogButton.AutoSize = true;
+            this.fullLogButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.fullLogButton.ForeColor = System.Drawing.SystemColors.ButtonFace;
             this.fullLogButton.Location = new System.Drawing.Point(13, 188);
             this.fullLogButton.Name = "fullLogButton";
-            this.fullLogButton.Size = new System.Drawing.Size(93, 17);
+            this.fullLogButton.Size = new System.Drawing.Size(90, 17);
             this.fullLogButton.TabIndex = 9;
             this.fullLogButton.Text = "Show Full Log";
             this.fullLogButton.UseVisualStyleBackColor = true;
@@ -116,42 +118,31 @@ namespace QuickFlash
             // manualBootSelectButton
             // 
             this.manualBootSelectButton.AutoSize = true;
+            this.manualBootSelectButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.manualBootSelectButton.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
             this.manualBootSelectButton.Location = new System.Drawing.Point(38, 165);
             this.manualBootSelectButton.Name = "manualBootSelectButton";
-            this.manualBootSelectButton.Size = new System.Drawing.Size(160, 17);
+            this.manualBootSelectButton.Size = new System.Drawing.Size(157, 17);
             this.manualBootSelectButton.TabIndex = 5;
             this.manualBootSelectButton.Text = "Manually Select Boot Option";
-            this.manualBootSelectButton.UseVisualStyleBackColor = true;
+            this.manualBootSelectButton.UseVisualStyleBackColor = false;
             // 
             // alwaysCleanButton
             // 
             this.alwaysCleanButton.AutoSize = true;
+            this.alwaysCleanButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.alwaysCleanButton.ForeColor = System.Drawing.SystemColors.ButtonFace;
             this.alwaysCleanButton.Location = new System.Drawing.Point(117, 188);
             this.alwaysCleanButton.Name = "alwaysCleanButton";
-            this.alwaysCleanButton.Size = new System.Drawing.Size(122, 17);
+            this.alwaysCleanButton.Size = new System.Drawing.Size(119, 17);
             this.alwaysCleanButton.TabIndex = 4;
             this.alwaysCleanButton.Text = "Always Clean Drives";
             this.alwaysCleanButton.UseVisualStyleBackColor = true;
             // 
-            // start
-            // 
-            this.start.BackColor = System.Drawing.Color.Linen;
-            this.start.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.start.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.start.Location = new System.Drawing.Point(13, 41);
-            this.start.Name = "start";
-            this.start.Size = new System.Drawing.Size(222, 73);
-            this.start.TabIndex = 0;
-            this.start.Text = "Flash Drives";
-            this.start.UseVisualStyleBackColor = false;
-            this.start.Click += new System.EventHandler(this.startClick);
-            // 
             // console
             // 
             this.console.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)));
-            this.console.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(56)))), ((int)(((byte)(63)))));
+            this.console.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(39)))), ((int)(((byte)(46)))));
             this.console.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.console.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.console.Location = new System.Drawing.Point(1, 229);
@@ -165,7 +156,7 @@ namespace QuickFlash
             // 
             // progressBar
             // 
-            this.progressBar.ForeColor = System.Drawing.SystemColors.Control;
+            this.progressBar.ForeColor = System.Drawing.SystemColors.ActiveBorder;
             this.progressBar.Location = new System.Drawing.Point(13, 127);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(222, 20);
@@ -173,7 +164,7 @@ namespace QuickFlash
             // 
             // menuStrip1
             // 
-            this.menuStrip1.BackColor = System.Drawing.Color.White;
+            this.menuStrip1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(138)))), ((int)(((byte)(125)))), ((int)(((byte)(113)))));
             this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.optionsToolStripMenuItem,
@@ -187,18 +178,27 @@ namespace QuickFlash
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.saveCurrentPresetToolStripMenuItem,
             this.preferencesToolStripMenuItem,
+            this.saveCurrentPresetToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "Options";
             // 
+            // saveCurrentPresetToolStripMenuItem
+            // 
+            this.saveCurrentPresetToolStripMenuItem.Name = "saveCurrentPresetToolStripMenuItem";
+            this.saveCurrentPresetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveCurrentPresetToolStripMenuItem.Text = "Save Current Preset";
+            this.saveCurrentPresetToolStripMenuItem.ToolTipText = "Saves the current settings";
+            this.saveCurrentPresetToolStripMenuItem.Click += new System.EventHandler(this.savePreferences);
+            // 
             // preferencesToolStripMenuItem
             // 
             this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
             this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.preferencesToolStripMenuItem.Text = "Change Preferences";
+            this.preferencesToolStripMenuItem.Text = "Preferences";
+            this.preferencesToolStripMenuItem.ToolTipText = "Settings and preference changes";
             this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.displayPreferences);
             // 
             // helpToolStripMenuItem
@@ -206,6 +206,7 @@ namespace QuickFlash
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.helpToolStripMenuItem.Text = "Help";
+            this.helpToolStripMenuItem.ToolTipText = "Displays help window";
             this.helpToolStripMenuItem.Click += new System.EventHandler(this.displayHelp);
             // 
             // toolsToolStripMenuItem
@@ -223,6 +224,7 @@ namespace QuickFlash
             this.updateMagicFlashDrivesToolStripMenuItem.Name = "updateMagicFlashDrivesToolStripMenuItem";
             this.updateMagicFlashDrivesToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
             this.updateMagicFlashDrivesToolStripMenuItem.Text = "Update Magic Flash Drives";
+            this.updateMagicFlashDrivesToolStripMenuItem.ToolTipText = "Updates Magic Flash Drives";
             this.updateMagicFlashDrivesToolStripMenuItem.Click += new System.EventHandler(this.flashMagicFlashDrives);
             // 
             // formatDrivesFAT32ToolStripMenuItem
@@ -230,6 +232,7 @@ namespace QuickFlash
             this.formatDrivesFAT32ToolStripMenuItem.Name = "formatDrivesFAT32ToolStripMenuItem";
             this.formatDrivesFAT32ToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
             this.formatDrivesFAT32ToolStripMenuItem.Text = "Format Drives (FAT32)";
+            this.formatDrivesFAT32ToolStripMenuItem.ToolTipText = "Formats all thumbdrives as FAT32";
             this.formatDrivesFAT32ToolStripMenuItem.Click += new System.EventHandler(this.FormatDrives);
             // 
             // outputConsoleToolStripMenuItem
@@ -237,18 +240,26 @@ namespace QuickFlash
             this.outputConsoleToolStripMenuItem.Name = "outputConsoleToolStripMenuItem";
             this.outputConsoleToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
             this.outputConsoleToolStripMenuItem.Text = "Output Console";
+            this.outputConsoleToolStripMenuItem.ToolTipText = "Outputs Console text to a .txt file for saving results";
             this.outputConsoleToolStripMenuItem.Click += new System.EventHandler(this.outputConsole);
             // 
             // folderBrowser
             // 
             this.folderBrowser.RootFolder = System.Environment.SpecialFolder.LocalizedResources;
             // 
-            // saveCurrentPresetToolStripMenuItem
+            // start
             // 
-            this.saveCurrentPresetToolStripMenuItem.Name = "saveCurrentPresetToolStripMenuItem";
-            this.saveCurrentPresetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.saveCurrentPresetToolStripMenuItem.Text = "Save Current Preset";
-            this.saveCurrentPresetToolStripMenuItem.Click += new System.EventHandler(this.savePreferences);
+            this.start.BackgroundImage = global::QuickFlash.Properties.Resources.flash;
+            this.start.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.start.FlatAppearance.MouseOverBackColor = System.Drawing.Color.White;
+            this.start.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.start.ForeColor = System.Drawing.Color.White;
+            this.start.Location = new System.Drawing.Point(13, 41);
+            this.start.Name = "start";
+            this.start.Size = new System.Drawing.Size(222, 73);
+            this.start.TabIndex = 0;
+            this.start.UseVisualStyleBackColor = false;
+            this.start.Click += new System.EventHandler(this.startClick);
             // 
             // MainWindow
             // 
@@ -269,7 +280,6 @@ namespace QuickFlash
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
-
         }
 
    

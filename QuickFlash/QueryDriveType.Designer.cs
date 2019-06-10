@@ -102,7 +102,7 @@ namespace QuickFlash
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(39)))), ((int)(((byte)(46)))));
             this.ClientSize = new System.Drawing.Size(285, 170);
             this.Controls.Add(this.CONTINUE);
             this.Controls.Add(this.label1);

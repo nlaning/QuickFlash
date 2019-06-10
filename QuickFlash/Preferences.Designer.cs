@@ -111,7 +111,7 @@ namespace QuickFlash
             // 
             this.limitLabel.AutoSize = true;
             this.limitLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
-            this.limitLabel.ForeColor = System.Drawing.Color.Red;
+            this.limitLabel.ForeColor = System.Drawing.Color.OrangeRed;
             this.limitLabel.Location = new System.Drawing.Point(119, 127);
             this.limitLabel.Name = "limitLabel";
             this.limitLabel.Size = new System.Drawing.Size(127, 13);
@@ -130,7 +130,7 @@ namespace QuickFlash
             this.selectDirectoryButton.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             this.selectDirectoryButton.TextImageRelation = System.Windows.Forms.TextImageRelation.TextAboveImage;
             this.selectDirectoryButton.UseVisualStyleBackColor = true;
-            this.selectDirectoryButton.Click += new System.EventHandler(SelectDirectory);
+            this.selectDirectoryButton.Click += new System.EventHandler(this.SelectDirectory);
             // 
             // folderBrowser
             // 
@@ -140,7 +140,7 @@ namespace QuickFlash
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(39)))), ((int)(((byte)(46)))));
             this.ClientSize = new System.Drawing.Size(351, 188);
             this.Controls.Add(this.selectDirectoryButton);
             this.Controls.Add(this.limitLabel);
