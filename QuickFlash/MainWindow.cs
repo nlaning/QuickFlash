@@ -304,14 +304,9 @@ namespace QuickFlash
                 string extension = (f[f.Length - 1].Split('.'))[1].ToLower();
                 if (extension.Equals("bat") || extension.Equals("exe")) selectedFiles.Add(f[f.Length - 1].ToLower());
             }
-            //if only one bat file, runs it
-            if (selectedFiles.Count == 1)
-            {
-                contents = new string[]{ "@echo off","cls",
-                    "echo running " + selectedFiles[0],"CALL "+ selectedFiles[0]};
-            }
+           
             //if more then one file, but less then 10
-            if (selectedFiles.Count < 9 && selectedFiles.Count > 1)
+            if (selectedFiles.Count < 9 && selectedFiles.Count != 0)
             {
                 List<string> contentsList = new List<string>();
                 contentsList.Add("@echo off");
@@ -330,7 +325,7 @@ namespace QuickFlash
                 //adds the actual options once selected, choice seems to like numbers in reverse order
                 for (int i = selectedFiles.Count - 1; i > -1; i--)
                 {
-                    contentsList.Add("IF ERRORLEVEL = " + (i + 1).ToString() + " CALL " + '"' + selectedFiles[i] + '"');
+                    contentsList.Add("IF %ERRORLEVEL% == " + (i + 1).ToString() + " CALL " + '"' + selectedFiles[i] + '"');
                 }
                 //convert from List to Array for createfile to accept it
                 contents = new string[contentsList.Count];
@@ -340,7 +335,7 @@ namespace QuickFlash
                 }
             }
             //if more then 9, just list options for user to type out
-            if (selectedFiles.Count > 9)
+            if (selectedFiles.Count > 9 || selectedFiles.Count==0)
             {
                 List<string> contentsList = new List<string>();
                 int linesAcross = 3;
