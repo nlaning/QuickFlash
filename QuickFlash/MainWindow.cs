@@ -626,7 +626,7 @@ namespace QuickFlash
             while (!worker.CancellationPending)
             {
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
-                string display = "Currently Insterted Drives: ";
+                string display = "Currently Inserted Drives: ";
                 foreach (DriveInfo D in allDrives)
                 {
                     //determine if thumbdrive
