@@ -26,8 +26,10 @@
  **/
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace QuickFlash
@@ -35,11 +37,13 @@ namespace QuickFlash
     public partial class MainWindow : Form
 
     {
+        Random random = new Random();
         double increment = 0;//for use in progress bar
         string path = "";//starting path.
         string magicDrivePath = "";//for use in magic drives
         string fullPath = "";//full path of file being moved
         long limit= 200000000;
+        private BackgroundWorker worker;
         string preferencesFile = "pref.txt";//just incase a name change is necessary
         string version = "1.21";//probably should be replaced for proper versioning...
                                 /* Main Window
@@ -53,6 +57,13 @@ namespace QuickFlash
             console.Text += "Welcome to Quick Flash! (" + version + ")\nPlease select a file to begin or press " + '"' + "help" + '"' + "\n";
             loadPreferences("Pref.txt");
             listDirectory(fileViewer, path);
+            worker = new BackgroundWorker
+            {
+                WorkerReportsProgress = true, WorkerSupportsCancellation = true
+            };
+            worker.DoWork += driveDisplay;
+            worker.ProgressChanged += refreshDriveDisplay;
+            worker.RunWorkerAsync();
             //console.
         }
 
@@ -184,8 +195,7 @@ namespace QuickFlash
         }
 
 
-        /*
-         * Flash Magic Drives
+        /*Flash Magic Drives
          *
          * Moves necessary files to magic drives, DOES NOT format them, in other words
          * this will not create new magic drives, just updates current ones. this is done to save immense time since
@@ -371,11 +381,12 @@ namespace QuickFlash
         }
 
 
+
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////FORMS///////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /*
-         * Display Help
+        /* Display Help
          * Does exactly what one might think, deploys a help screen in a new window/form
          * */
         private void displayHelp(object sender, EventArgs e)
@@ -406,18 +417,17 @@ namespace QuickFlash
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////DRIVE TOOLS/////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /*
-                 * determine Type 
-                 * determines given the file(s) selected how the software 
-                 * should behave, looking for four main cases:
-                 * 1: no files or too large of file(s) tripping a request to pick a new directory <--- still working on this!
-                 * 2: determines the directory to be of DOS importance
-                 * 3: determines the directory to be of EFI importance
-                 * 4: determines the directory to be of INSTANT importance
-                 * 5: an undetermined state by which the user will need to select the the type
-                 * these will output strings in the order following above
-                 * "DOS","EFI","INSTANT"
-                 **/
+        /* Determine Type 
+         * determines given the file(s) selected how the software 
+         * should behave, looking for four main cases:
+         * 1: no files or too large of file(s) tripping a request to pick a new directory <--- still working on this!
+         * 2: determines the directory to be of DOS importance
+         * 3: determines the directory to be of EFI importance
+         * 4: determines the directory to be of INSTANT importance
+         * 5: an undetermined state by which the user will need to select the the type
+         * these will output strings in the order following above
+         * "DOS","EFI","INSTANT"
+         **/
         private string determineType()
         {
             string returnValue = "Instant";
@@ -602,6 +612,45 @@ namespace QuickFlash
             progressBar.Value = 100;
             buttonEnabler(true);
             console.Text += "Process Complete!\n";
+        }
+        /* Drive Display
+ * 
+ * Gathers all drives continuosly and displays them, this is primarily used
+ * to determine when any drive is not functioning properly, disconnecting the drives one 
+ * one by one watching the letters go away.
+ * 
+ * This is designed to be used in threading use cases
+ * */
+        public void driveDisplay(object sender, DoWorkEventArgs e)
+        {
+            while (!worker.CancellationPending)
+            {
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
+                string display = "Currently Insterted Drives: ";
+                foreach (DriveInfo D in allDrives)
+                {
+                    //determine if thumbdrive
+                    if (D.DriveType.ToString().Equals("Removable"))
+                    {
+                        display += D.Name.Remove(1) + " ";
+                    }
+                }
+                Thread.Sleep(100);
+                worker.ReportProgress(0, display);
+            }
+        }
+
+        /* RefreshDriveDisplay
+         * 
+         * simply used as a gate of sorts, albiet a basic one, but suffiecent for a simple thread.
+         * takes the "thread Progress" although this mainly a workaround, and dispalys the string 
+         * associated.
+         * 
+         * */
+        private void refreshDriveDisplay(object sender, ProgressChangedEventArgs e)
+        {
+            label1.Text = e.UserState as string;
+
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
