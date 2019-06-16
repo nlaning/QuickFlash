@@ -44,7 +44,7 @@ namespace QuickFlash
         long limit = 200000000;
         private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker;
         string preferencesFile = "pref.txt"; //just incase a name change is necessary
-        string version = "1.21"; //probably should be replaced for proper versioning...
+        string version = "1.31"; //probably should be replaced for proper versioning...
         /* Main Window
         * first opening the program, (like main)
         * */
