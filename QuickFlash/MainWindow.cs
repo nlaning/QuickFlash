@@ -37,55 +37,35 @@ namespace QuickFlash
     public partial class MainWindow : Form
 
     {
-        Random random = new Random();
-        double increment = 0;//for use in progress bar
-        string path = "";//starting path.
-        string magicDrivePath = "";//for use in magic drives
-        string fullPath = "";//full path of file being moved
-        long limit= 200000000;
-        private BackgroundWorker worker;
-        string preferencesFile = "pref.txt";//just incase a name change is necessary
-        string version = "1.21";//probably should be replaced for proper versioning...
-                                /* Main Window
-                                * first opening the program, (like main)
-                                * */
+        double increment = 0; //for use in progress bar
+        string path = ""; //starting path.
+        string magicDrivePath = ""; //for use in magic drives
+        string fullPath = ""; //full path of file being moved
+        long limit = 200000000;
+        private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker;
+        string preferencesFile = "pref.txt"; //just incase a name change is necessary
+        string version = "1.21"; //probably should be replaced for proper versioning...
+        /* Main Window
+        * first opening the program, (like main)
+        * */
         public MainWindow()
         {
             clearOutCMDProccesses();
             InitializeComponent();
-            this.Text = "QuickFlash " + version;
+            loadWorkers();
+            Text = "QuickFlash " + version;
             console.Text += "Welcome to Quick Flash! (" + version + ")\nPlease select a file to begin or press " + '"' + "help" + '"' + "\n";
             loadPreferences("Pref.txt");
             listDirectory(fileViewer, path);
-            worker = new BackgroundWorker
-            {
-                WorkerReportsProgress = true, WorkerSupportsCancellation = true
-            };
-            worker.DoWork += driveDisplay;
-            worker.ProgressChanged += refreshDriveDisplay;
-            worker.RunWorkerAsync();
-            //console.
+
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////CORE FUNCTIONS///////////////////////////////////////////////
+        /////////////////////////////////////////////////////////// CORE FUNCTIONS /////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        /* Start Click
-         *   ________________
-         *  /               /----. 
-         * /_______________/____/01101010010100101010001010010110101010101
-         * |_______________|----'
-         * 
-        *  where all the magic happens, executes a series of methods to
-        *  flash, clean, and move files onto all plugged in thumbdrives
-        **/
-        private void startClick(object sender, EventArgs e)
+        private void flashDrivesClick(object sender, EventArgs e)
         {
-
-            //disable buttons that should not be pushed during proccess
             buttonEnabler(false);
-            //getting actual location of files to verify size
             console.Text += "building pathway\n";
             string[] pathParts = path.Split('\\');
             fullPath = "";
@@ -94,125 +74,15 @@ namespace QuickFlash
                 fullPath += pathParts[i];
                 fullPath += '\\';
             }
+
             fullPath += fileViewer.SelectedNode.FullPath;
-            //determining the boot option
-            //gathering file size
-            long fileSize = getFileSize(fullPath);
-            string size = "selected folder is ";
-            if (fileSize > 1000000)
-            {
-                size += (int)(fileSize / 1000000.0) + "mb";
-            }
-            else
-            {
-                size += (int)(fileSize / 1000.0) + "kb";
-            }
-            //estimate time
-            long start = DateTime.Now.Ticks / 10000;//time in ms
-            //stop program if file is too large
-            if (fileSize > limit)
-            {
-                console.Text += "\n" + (int)(fileSize / 1000000.0) + "mb is too large!\n" +
-                    "Check that you have selected the correct file\n" +
-                    "or adjust the limit in pref.txt";
-                buttonEnabler(true);
-                return;
-            }
-            if (fullLogButton.Checked) console.Text += size + " in size\n";
-            string InstallerType = determineType();
-            if (fullLogButton.Checked) console.Text += InstallerType + " Selected as boot type\n";
-            //if no option selected quit operation entirely
-            progressBar.Value = 5;
-            Application.DoEvents();
-            //gets all thumbdrives and starts the proccess, making vars aswell
-            DriveInfo[] allDrives = DriveInfo.GetDrives();
-            console.Text += "Flash Initiated, DO NOT remove thumdrives\n";
-            int drive = 0;
-            int thumbdrives = 0;
-            // estimate time using previously gathered data
-            //if cleaning time estimate will be much more eradic, this could be adjusted but general time constraints tend to be more useful
-            long bytesPerSecond = 4560000;
-            long totalTime = fileSize / bytesPerSecond;
-            if (InstallerType == "DOS") totalTime += 1;
-            if (alwaysCleanButton.Checked) totalTime += 8;
-            totalTime += 1;//adding one since there is a built in delay for drives attached and the average number of drives would most likely be around 1-4
-            //increments through all drives
-            console.Text += "Estimated time: " + totalTime + " sec\n";
-            foreach (DriveInfo D in allDrives)
-            {
-                //determine if thumbdrive
-                if (D.DriveType.ToString().Equals("Removable"))
-                {
-                    thumbdrives++;
-                    //gather info
-                    string driveLetter = D.Name.ToString().Remove(2);
-                    string driveFormat = D.DriveFormat;
-                    //if format type doesnt match, flash drive
-                    if (driveFormat != "FAT32")
-                    {
-                        console.Text += "Formating Drive " + driveLetter + "...\n";
-                        formatDrive(driveLetter, drive.ToString());
-                    }
-                    //if (alwaysCleanButton.Checked && InstallerType != "DOS")
-                    //{
-                    //    console.Text += "Cleaning drive " + driveLetter + " as requested\n";
-                    //    cleanDrive(driveLetter);
-                    //}
-                    console.Text += "loading drive " + driveLetter + " with necessary components...\n";
-                    //loading drive with components
-                    loadDrive(driveLetter, InstallerType, drive.ToString());
-                }
-                drive++;
-            }
-            console.Text += "Waiting for files to finish transfering...\n";
-            //finishing up, waits for cmd to stop proccessing
-
-            int currentlyRunning = Process.GetProcessesByName("cmd").Length;
-            int largestAmount = currentlyRunning;
-            while (currentlyRunning > 0)
-            {
-                //loading bar stuff
-                if (currentlyRunning > largestAmount) largestAmount = currentlyRunning;
-                progressBar.Value = (int)(5 + (90 - 90 * (currentlyRunning / largestAmount)));
-                Application.DoEvents();
-                //checking
-                currentlyRunning = Process.GetProcessesByName("cmd").Length;
-            }
-            progressBar.Value = 90;
-            Application.DoEvents();
-            if (alwaysCleanButton.Checked)
-            {
-                console.Text += "Removing old Files...\n";
-                removeOldFiles(fullPath, InstallerType);
-            }
-            
-            if (fullLogButton.Checked) console.Text += "Elapsed time: " + ((DateTime.Now.Ticks / 10000 - start) / 1000) + " Sec\n";//time in ms
-
-            progressBar.Value = 100;
-            buttonEnabler(true);
-            console.Text += "Process Complete!\n";
-
+            flashDrivesWorker.RunWorkerAsync();
         }
 
-
-        /*Flash Magic Drives
-         *
-         * Moves necessary files to magic drives, DOES NOT format them, in other words
-         * this will not create new magic drives, just updates current ones. this is done to save immense time since
-         * creating a new one everytime would require formatting and diskpart doesnt like running in multiple instances 
-         * therefor the slowdown would be immense
-         * 
-         * Furthermore the directory is manually placed into the preferences file (pref.txt)
-         * this is to prevent tampering as theoretically this directory will never change
-         * But does prompt the user if either the current folder does not exist or the preferences file is not saved
-         * 
-         * */
-        private void flashMagicFlashDrives(object sender, EventArgs e)
+        private void magicDrivesClick(object sender, EventArgs e)
         {
-            int currentlyRunning = Process.GetProcessesByName("cmd").Length;
-            int largestAmount = currentlyRunning;
-
             buttonEnabler(false);
+            console.Text += "building pathway\n";
             //if empty prompt for a new directory
             if (magicDrivePath.Equals("") || !Directory.Exists(magicDrivePath))
             {
@@ -226,19 +96,117 @@ namespace QuickFlash
                 {
                     buttonEnabler(true);
                     return;
-                } 
+                }
             }
-            //find folder to copy
-            List<string> directories = new List<string>(Directory.EnumerateDirectories(magicDrivePath));
-            //string folder = "";
-            foreach (string directory in directories)
+            findMagicFolder();
+            magicDrivesWorker.RunWorkerAsync();
+        }
+
+        /* Flash Drives
+        *   ________________
+        *  /               /----. 
+        * /_______________/____/101101010010100101010001010010110101010101
+        * |_______________|----'
+        * 
+        *  where all the magic happens, executes a series of methods to
+        *  flash, clean, and move files onto all plugged in thumbdrives
+        **/
+        private void flashDrives(object sender, DoWorkEventArgs e)
+        {
+            int progress = 5; //disable buttons that should not be pushed during proccess
+            long fileSize = getFileSize(fullPath);
+            string size = "";
+            if (fileSize > 1000000)
             {
-                string[] dir = directory.Split('\\');
-                string name = dir[dir.Length - 1];
-                if (name.Split('_').Length > 1) magicDrivePath = directory;
+                size += (int)(fileSize / 1000000.0) + "mb";
             }
+            else
+            {
+                size += (int)(fileSize / 1000.0) + "kb";
+            }
+            //estimate time
+            long start = DateTime.Now.Ticks / 10000;//time in ms
+            //stop program if file is too large
+            if (fileSize > limit)
+            {
+                flashDrivesWorker.ReportProgress(0, size + " is too large!\n" +
+                    "Check that you have selected the correct file\n" +
+                    "or adjust the limit in pref.txt");
+                return;
+            }
+            if (fullLogButton.Checked) flashDrivesWorker.ReportProgress(progress, "selected folder is " + size + " in size");
+            string InstallerType = determineType();
+            if (fullLogButton.Checked) flashDrivesWorker.ReportProgress(progress, InstallerType + " Selected as boot type");
+            //gets all thumbdrives and starts the proccess, making vars aswell
             DriveInfo[] allDrives = DriveInfo.GetDrives();
-            console.Text += "Gathering Magic Flash Drives...\n";
+            flashDrivesWorker.ReportProgress(progress, "Flash Initiated, DO NOT remove thumdrives");
+            int drive = 0;
+            int thumbdrives = 0;
+            // estimate time using previously gathered data
+            //if cleaning time estimate will be much more eradic, this could be adjusted but general time constraints tend to be more useful
+            long bytesPerSecond = 4560000;
+            long totalTime = fileSize / bytesPerSecond;
+            if (InstallerType == "DOS") totalTime += 1;
+            if (alwaysCleanButton.Checked) totalTime += 8;
+            totalTime += 1;//adding one since there is a built in delay for drives attached and the average number of drives would most likely be around 1-4
+            //increments through all drives
+
+            flashDrivesWorker.ReportProgress(progress, "Estimated time: " + totalTime + " sec");
+            if (fullLogButton.Checked) flashDrivesWorker.ReportProgress(progress, "moving files from " + fullPath + " ...");
+            foreach (DriveInfo D in allDrives)
+            {
+                //determine if thumbdrive
+                if (D.DriveType.ToString().Equals("Removable"))
+                {
+                    thumbdrives++;
+                    //gather info
+                    string driveLetter = D.Name.ToString().Remove(2);
+                    string driveFormat = D.DriveFormat;
+                    //if format type doesnt match, flash drive
+                    if (driveFormat != "FAT32")
+                    {
+                        flashDrivesWorker.ReportProgress(progress, "Formating Drive " + driveLetter + "...");
+                        formatDrive(driveLetter, drive.ToString());
+                    }
+                    flashDrivesWorker.ReportProgress(progress, "loading drive " + driveLetter + " with necessary components...");
+                    //loading drive with components
+                    
+                    loadDrive(driveLetter, InstallerType, drive.ToString());
+                }
+                drive++;
+            }
+            
+            //finishing up, waits for cmd to stop proccessing
+            
+            if (alwaysCleanButton.Checked)
+            {
+                progress = 90;
+                flashDrivesWorker.ReportProgress(progress, "Removing old Files...");
+                removeOldFiles(fullPath, InstallerType,progress, flashDrivesWorker);
+            }
+            flashDrivesWorker.ReportProgress(progress, "Finishing up");
+            waitForFinish(progress, flashDrivesWorker);
+            if (fullLogButton.Checked) flashDrivesWorker.ReportProgress(progress, "Elapsed time: " + ((DateTime.Now.Ticks / 10000 - start) / 1000) + " Sec");//time in ms
+
+        }
+
+        /*Flash Magic Drives
+         *
+         * Moves necessary files to magic drives, DOES NOT format them, in other words
+         * this will not create new magic drives, just updates current ones. this is done to save immense time since
+         * creating a new one everytime would require formatting and diskpart doesnt like running in multiple instances 
+         * therefor the slowdown would be immense
+         * 
+         * Furthermore the directory is manually placed into the preferences file (pref.txt)
+         * this is to prevent tampering as theoretically this directory will never change
+         * But does prompt the user if either the current folder does not exist or the preferences file is not saved
+         * 
+         * */
+        private void flashMagicFlashDrives(object sender, DoWorkEventArgs e)
+        {
+            int progress=5;
+            DriveInfo[] allDrives = DriveInfo.GetDrives();
+            magicDrivesWorker.ReportProgress(progress, "Gathering Magic Flash Drives...");
             int drive = 0;
             foreach (DriveInfo D in allDrives)
             {
@@ -247,8 +215,8 @@ namespace QuickFlash
                 {
                     //gather info            
                     string driveLetter = D.Name.ToString().Remove(2);
-                    
-                    console.Text += "loading Magic Drive " + driveLetter + " with necessary components...\n";
+
+                    magicDrivesWorker.ReportProgress(progress,"loading Magic Drive " + driveLetter + " with necessary components...");
                     //loading drive with components
                     List<string> excludedFiles = new List<string>();
                     List<string> driveFiles = getFilePath(driveLetter+@"\");
@@ -261,7 +229,7 @@ namespace QuickFlash
                         }
                     }
                     loadDrive(driveLetter, "INSTANT", drive.ToString());
-                    if (fullLogButton.Checked) console.Text += "moving files from " + fullPath + " ...\n";
+                    if (fullLogButton.Checked) magicDrivesWorker.ReportProgress(progress, "moving files from " + fullPath + " ...");
                     string[] cmd = { @"xcopy " + '"' + magicDrivePath + @"\" + "*" + '"' + " " + driveLetter + @" /e /h /i /y /c /EXCLUDE:exclude"+driveLetter.Split(':')[0]+".txt "/*>log" + driveLetter.Split(':')[0] + ".txt"*/ };
                     createFile("copy" + driveLetter.Split(':')[0] + ".bat", cmd);
                     string[] excludedFilesArray = new string[excludedFiles.Count];
@@ -275,22 +243,15 @@ namespace QuickFlash
                 }
                 drive++;
             }
-            console.Text += "Waiting for all files to transfer...\n";
+            progress += 5;
+            magicDrivesWorker.ReportProgress(progress, "Waiting for all files to transfer...");
             //finishing up, waits for cmd to stop proccessing
-
-            currentlyRunning = Process.GetProcessesByName("cmd").Length;
-            while (currentlyRunning > 0)
-            {
-                currentlyRunning = Process.GetProcessesByName("cmd").Length;
-            }
-            console.Text += "Removing old Files...\n";
-            removeOldFiles(magicDrivePath, "none");
-            progressBar.Value = 100;
-            console.Text += "Magic Drives ready!\n";
-
-            buttonEnabler(true);
+            waitForFinish(progress, magicDrivesWorker);
+            magicDrivesWorker.ReportProgress(progress, "Removing old Files...");
+            removeOldFiles(magicDrivePath, "none",progress, magicDrivesWorker);
+            waitForFinish(progress, magicDrivesWorker);
         }
-
+ 
         /* Generate AUTOEXEC
          * Creates an AUTOEXEC batch file to automate or make choosing a file without typing
          * It searches through the directory to determine other batch files that are canidates
@@ -299,10 +260,7 @@ namespace QuickFlash
          **/
         private void generateAUTOEXEC(string driveLetter)
         {
-            if (fullLogButton.Checked)
-            {
-                console.Text += "Generating AUTOEXEC for DOS bootable\n";
-            }
+            
             //default output
             string[] contents = { "@echo off","cls",
                 "echo No Batch or Executable Files Found on Drive, type DIR to get a list of the directory as you may need to navigate to a different directory" };
@@ -380,11 +338,23 @@ namespace QuickFlash
 
         }
 
-
+        private void findMagicFolder()
+        {
+            //find folder to copy
+            List<string> directories = new List<string>(Directory.EnumerateDirectories(magicDrivePath));
+            foreach (string directory in directories)
+            {
+                string[] dir = directory.Split('\\');
+                string name = dir[dir.Length - 1];
+                if (name.Split('_').Length > 1) magicDrivePath = directory;
+                if (fullLogButton.Checked) console.Text += magicDrivePath + "\nselected as file path\n";
+                return;
+            }
+        }
 
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////FORMS///////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////// FORMS //////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /* Display Help
          * Does exactly what one might think, deploys a help screen in a new window/form
@@ -415,7 +385,7 @@ namespace QuickFlash
             }
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////DRIVE TOOLS/////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////// DRIVE TOOLS ////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /* Determine Type 
          * determines given the file(s) selected how the software 
@@ -472,6 +442,7 @@ namespace QuickFlash
 
             return returnValue;
         }
+
         /* DOS Boot
          * 
          * Deploys DOS and makes it bootable on the drive specified
@@ -538,10 +509,6 @@ namespace QuickFlash
             createFile("clean" + number + ".txt", textLines);
             createFile("clean" + number + ".bat", batchLines);
             runBATFile("clean" + number + ".bat", true);
-            if (fullLogButton.Checked)
-            {
-                outputLog("cleanlog" + number + ".txt", 6);
-            }
 
 
         }
@@ -613,6 +580,7 @@ namespace QuickFlash
             buttonEnabler(true);
             console.Text += "Process Complete!\n";
         }
+
         /* Drive Display
  * 
  * Gathers all drives continuosly and displays them, this is primarily used
@@ -623,7 +591,7 @@ namespace QuickFlash
  * */
         public void driveDisplay(object sender, DoWorkEventArgs e)
         {
-            while (!worker.CancellationPending)
+            while (true)
             {
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
                 string display = "Currently Inserted Drives: ";
@@ -636,27 +604,15 @@ namespace QuickFlash
                     }
                 }
                 Thread.Sleep(100);
-                worker.ReportProgress(0, display);
+                checkDrivesWorker.ReportProgress(0, display);
             }
-        }
-
-        /* RefreshDriveDisplay
-         * 
-         * simply used as a gate of sorts, albiet a basic one, but suffiecent for a simple thread.
-         * takes the "thread Progress" although this mainly a workaround, and dispalys the string 
-         * associated.
-         * 
-         * */
-        private void refreshDriveDisplay(object sender, ProgressChangedEventArgs e)
-        {
-            label1.Text = e.UserState as string;
-
+            
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////FILE HANDLING///////////////////////////////////////////////
+        /////////////////////////////////////////////////////////// FILE HANDLING //////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /* Comnpare Files
+        /* Compare Files
          * Compares files to determine whether or not they are the same
          * currrently only checks size, has the ability to check each byte but is cuurently disabled
          * due to how long it takes. But I left it in here incase more precision is ever needed
@@ -686,6 +642,7 @@ namespace QuickFlash
             //}
             return true;
         }
+
         /* Get Files
          * recursively gathers files by path
          * 
@@ -706,10 +663,11 @@ namespace QuickFlash
             }
             catch
             {
-                console.Text += "Error gathering path: " + path + "\n";
+               
             }
             return allFiles;
         }
+
         /* Run BAT file
         * Runs a specified BAT file in the background, it is also capable of waiting for completetion
         * for programs like diskpart that dont like to be instanced. there is also a manually placed delay 
@@ -759,14 +717,14 @@ namespace QuickFlash
          * Removes files that exist in one directory but not the other, excluding key system files
          * 
          * */
-        private void removeOldFiles(string sourceDirectory,string installerType)
+        private void removeOldFiles(string sourceDirectory,string installerType,int progress,BackgroundWorker worker)
         {
             
             List<string> Exclusions = new List<string>();
             Exclusions.Add("IndexerVolumeGuid");
             Exclusions.Add("WPSettings.dat" );
-            Exclusions.Add("ldlinux.c32");
-            Exclusions.Add("ldlinux.sys");
+            //Exclusions.Add("ldlinux.c32");
+            //Exclusions.Add("ldlinux.sys");
             if (installerType == "DOS")
             {
                 List<string> DOSExclusions = getFilePath("DOS");
@@ -784,7 +742,7 @@ namespace QuickFlash
                 {
                     
                     string hostDirectory = D.Name;
-                    console.Text += "Cleaning "+ hostDirectory+"\n";
+                    worker.ReportProgress(progress,"Cleaning "+ hostDirectory);
                     List<string> fileList = getFilePath(D.Name);
                     
                     foreach (string file in fileList)
@@ -802,7 +760,7 @@ namespace QuickFlash
                                 }
                                 catch
                                 {
-                                    console.Text+="Error occured while Deleting " + file + "\n";
+                                    worker.ReportProgress(progress, "Error occured while Deleting " + file );
                                 }
                             }
                         }
@@ -830,6 +788,7 @@ namespace QuickFlash
             }
             return total;
         }
+
         /* Copy Selected File
          * copies the selected path, for excclusive use, could be either improved
          * to be more generic or depricated completely infavor of on use cases
@@ -837,7 +796,7 @@ namespace QuickFlash
          * */
         private void copySelectedFile(string drive)
         {
-            if (fullLogButton.Checked) console.Text += "moving files from " + fullPath + " ...\n";
+           
             string folderToMove = fullPath;
             string[] cmd = { @"xcopy " + '"' + folderToMove + '\\' + "*" + '"' + " " + drive + @" /e /h /i /y /c >log" + drive.Split(':')[0] + ".txt" };
             drive = drive.Split(':')[0];
@@ -847,7 +806,7 @@ namespace QuickFlash
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////MISC////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /*string to bool
         *converts plain text into boolean values
@@ -864,6 +823,7 @@ namespace QuickFlash
              * only needs a boolean to determine enabling or disabling
              * 
              * */
+
         private void buttonEnabler(bool enabled)
         {
             start.Enabled = enabled;
@@ -874,6 +834,7 @@ namespace QuickFlash
         }
 
         /*Output Console
+         * 
          * Outputs the console to a txt file 
          * the name is generated using the current time 
          * 
@@ -886,6 +847,7 @@ namespace QuickFlash
             string[] consoleText = console.Text.Split('\n');
             createFile(name, consoleText);
         }
+
         /* Output Log
          * outputs a specified log to the console, typically only used when
          * the "show full log" option is selected, and can be used to view progress or errors
@@ -904,12 +866,14 @@ namespace QuickFlash
                 }
             }
         }
+        
         //Scrolls console automatically to keep the most relevent info visable
         private void consoleTextChanged(object sender, EventArgs e)
         {
             console.SelectionStart = console.Text.Length;
             console.ScrollToCaret();
         }
+
         /*load preferences
          * loads preferences from specified file in txt format
          * the default for this instance is pref.txt (see above)
@@ -987,6 +951,7 @@ namespace QuickFlash
             };
             createFile(preferencesFile, preferences);
         }
+
         /*Browse For Folder
          * Basic Folder Browsing dialogue to allow the user to change the root directory
          * 
@@ -1002,6 +967,7 @@ namespace QuickFlash
             }
             else return;
         }
+
         /* Clear Out CMD Proccesses
          * This forcebly clears out all pending,locked,or even just running command proccesses 
          * this avoids conflicts and lock ups
@@ -1014,6 +980,7 @@ namespace QuickFlash
                 P.Kill();
             }
         }
+
         /* Initiates a node tree to access the full specifed directory and all of its children
          * only cares about directories
          * takes the TreeView it would like to change, and the path of the specified folder
@@ -1066,6 +1033,83 @@ namespace QuickFlash
                 }
             }
             return directoryNode;
+
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////// THREADING STUFF //////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //initializes workers 
+        private void loadWorkers()
+        {
+            //drive updating workers init
+            checkDrivesWorker = new BackgroundWorker();
+            checkDrivesWorker.WorkerReportsProgress = true;
+            checkDrivesWorker.DoWork += driveDisplay;
+            checkDrivesWorker.ProgressChanged += refreshDriveDisplay;
+            checkDrivesWorker.RunWorkerAsync();
+            //flashing worker init
+            flashDrivesWorker = new BackgroundWorker();
+            flashDrivesWorker.WorkerReportsProgress = true;
+            flashDrivesWorker.DoWork += flashDrives;
+            flashDrivesWorker.ProgressChanged += driveProgressChanged;
+            flashDrivesWorker.RunWorkerCompleted += driveProgressCompleted ;
+            //magic drive worker init
+            magicDrivesWorker = new BackgroundWorker();
+            magicDrivesWorker.WorkerReportsProgress = true;
+            magicDrivesWorker.DoWork += flashMagicFlashDrives;
+            magicDrivesWorker.ProgressChanged += driveProgressChanged;
+            magicDrivesWorker.RunWorkerCompleted += driveProgressCompleted;
+        }
+
+        private void driveProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progressBar.Value = e.ProgressPercentage;
+            string text = e.UserState as string;
+            if (text != null )  console.Text += text + "\n";
+        }
+
+        private void driveProgressCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            progressBar.Value = 100;
+            buttonEnabler(true);
+            console.Text += "Process Complete!\n";
+        }
+
+        /* Wait to finish
+         * waits for all running (cmd)processes to complete
+         * */
+        private void waitForFinish(int startingProgress, BackgroundWorker worker)
+        {
+            int progress = startingProgress;
+            int currentlyRunning = Process.GetProcessesByName("cmd").Length;
+            int largestAmount = currentlyRunning;
+            int currentProgress = startingProgress;
+            while (currentlyRunning > 0)
+            {
+                if (currentlyRunning > largestAmount) largestAmount = currentlyRunning;
+
+                progress = (largestAmount - currentlyRunning) * ((100 - startingProgress) * progress / largestAmount) + startingProgress;
+                if (currentProgress != progress)
+                {
+                    worker.ReportProgress(progress);
+                    currentProgress = progress;
+                }
+                Thread.Sleep(100);
+                //checking
+                currentlyRunning = Process.GetProcessesByName("cmd").Length;
+            }
+        }
+
+        /* RefreshDriveDisplay
+         * 
+         * simply used as a gate of sorts, albiet a basic one, but suffiecent for a simple thread.
+         * takes the "thread Progress" although this mainly a workaround, and dispalys the string 
+         * associated.
+         * 
+         * */
+        private void refreshDriveDisplay(object sender, ProgressChangedEventArgs e)
+        {
+            label1.Text = e.UserState as string;
 
         }
 

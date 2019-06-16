@@ -50,7 +50,6 @@ namespace QuickFlash
             this.updateMagicFlashDrivesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.formatDrivesFAT32ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.outputConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -108,10 +107,12 @@ namespace QuickFlash
             // label1
             // 
             this.label1.AutoSize = true;
+            this.label1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.label1.ForeColor = System.Drawing.SystemColors.ButtonFace;
-            this.label1.Location = new System.Drawing.Point(4, 489);
+            this.label1.Location = new System.Drawing.Point(0, 490);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(35, 13);
+            this.label1.Padding = new System.Windows.Forms.Padding(0, 0, 0, 4);
+            this.label1.Size = new System.Drawing.Size(35, 17);
             this.label1.TabIndex = 13;
             this.label1.Text = "label1";
             // 
@@ -163,7 +164,7 @@ namespace QuickFlash
             this.start.Size = new System.Drawing.Size(222, 73);
             this.start.TabIndex = 0;
             this.start.UseVisualStyleBackColor = false;
-            this.start.Click += new System.EventHandler(this.startClick);
+            this.start.Click += new System.EventHandler(this.flashDrivesClick);
             // 
             // console
             // 
@@ -214,7 +215,7 @@ namespace QuickFlash
             // preferencesToolStripMenuItem
             // 
             this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
-            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.preferencesToolStripMenuItem.Text = "Preferences";
             this.preferencesToolStripMenuItem.ToolTipText = "Settings and preference changes";
             this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.displayPreferences);
@@ -222,7 +223,7 @@ namespace QuickFlash
             // saveCurrentPresetToolStripMenuItem
             // 
             this.saveCurrentPresetToolStripMenuItem.Name = "saveCurrentPresetToolStripMenuItem";
-            this.saveCurrentPresetToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.saveCurrentPresetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.saveCurrentPresetToolStripMenuItem.Text = "Save Current Preset";
             this.saveCurrentPresetToolStripMenuItem.ToolTipText = "Saves the current settings";
             this.saveCurrentPresetToolStripMenuItem.Click += new System.EventHandler(this.savePreferences);
@@ -230,7 +231,7 @@ namespace QuickFlash
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.helpToolStripMenuItem.Text = "Help";
             this.helpToolStripMenuItem.ToolTipText = "Displays help window";
             this.helpToolStripMenuItem.Click += new System.EventHandler(this.displayHelp);
@@ -251,7 +252,7 @@ namespace QuickFlash
             this.updateMagicFlashDrivesToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
             this.updateMagicFlashDrivesToolStripMenuItem.Text = "Update Magic Flash Drives";
             this.updateMagicFlashDrivesToolStripMenuItem.ToolTipText = "Updates Magic Flash Drives";
-            this.updateMagicFlashDrivesToolStripMenuItem.Click += new System.EventHandler(this.flashMagicFlashDrives);
+            this.updateMagicFlashDrivesToolStripMenuItem.Click += new System.EventHandler(this.magicDrivesClick);
             // 
             // formatDrivesFAT32ToolStripMenuItem
             // 
@@ -309,7 +310,6 @@ namespace QuickFlash
         private System.Windows.Forms.Button start;
         private System.Windows.Forms.RichTextBox console;
         private System.Windows.Forms.CheckBox alwaysCleanButton;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.CheckBox manualBootSelectButton;
         private System.Windows.Forms.CheckBox fullLogButton;
         private System.Windows.Forms.FolderBrowserDialog folderBrowser;

@@ -99,7 +99,7 @@ namespace QuickFlash
             // 
             // applyButton
             // 
-            this.applyButton.Location = new System.Drawing.Point(99, 147);
+            this.applyButton.Location = new System.Drawing.Point(99, 160);
             this.applyButton.Name = "applyButton";
             this.applyButton.Size = new System.Drawing.Size(167, 23);
             this.applyButton.TabIndex = 6;
@@ -112,7 +112,7 @@ namespace QuickFlash
             this.limitLabel.AutoSize = true;
             this.limitLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
             this.limitLabel.ForeColor = System.Drawing.Color.OrangeRed;
-            this.limitLabel.Location = new System.Drawing.Point(119, 127);
+            this.limitLabel.Location = new System.Drawing.Point(119, 140);
             this.limitLabel.Name = "limitLabel";
             this.limitLabel.Size = new System.Drawing.Size(127, 13);
             this.limitLabel.TabIndex = 7;
@@ -141,7 +141,7 @@ namespace QuickFlash
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(39)))), ((int)(((byte)(46)))));
-            this.ClientSize = new System.Drawing.Size(351, 188);
+            this.ClientSize = new System.Drawing.Size(351, 198);
             this.Controls.Add(this.selectDirectoryButton);
             this.Controls.Add(this.limitLabel);
             this.Controls.Add(this.applyButton);
