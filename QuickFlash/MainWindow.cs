@@ -570,6 +570,7 @@ namespace QuickFlash
                 if (D.DriveType.ToString().Equals("Removable"))
                 {
                     //gather info
+                    overrideAllRights(D.Name);
                     string driveLetter = D.Name.ToString().Remove(2);
                     console.Text += "Formatting Drive " + driveLetter + " ...\n";
                     formatDrive(driveLetter, drive.ToString());
@@ -712,7 +713,26 @@ namespace QuickFlash
             }
             writer.Close();
         }
-
+        /* Override Rights
+         * 
+         * 
+         * */
+        private void overrideAllRights(string path)
+        {
+            
+            List<string> fileList = getFilePath(path);
+            foreach (string file in fileList)
+            {
+                try
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                }
+                catch
+                {
+                    console.Text += file + " has protected rights\n";
+                };
+            }
+        }
         /*Remove Old Files
          * Removes files that exist in one directory but not the other, excluding key system files
          * 
@@ -1001,6 +1021,7 @@ namespace QuickFlash
             {
                 //browseForFolder(this, null);
             }
+            
         }
 
         /* Create Directory Node
@@ -1035,6 +1056,17 @@ namespace QuickFlash
             return directoryNode;
 
         }
+
+        //private void SearchTree(TreeView treeView, string name)
+        //{
+        //    TreeNode[] newNodes = new TreeNode[treeView.Nodes.r;
+        //    treeView.Nodes.CopyTo(newNodes,0);
+        //    TreeNodeCollection treeNodes = treeView.Nodes;
+        //    foreach(TreeNode node in treeNodes)
+        //    {
+                
+        //    }
+        //}
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////// THREADING STUFF //////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
