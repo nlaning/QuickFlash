@@ -1095,7 +1095,9 @@ namespace QuickFlash
 
         private void driveProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            progressBar.Value = e.ProgressPercentage;
+            int percentage = e.ProgressPercentage;
+            if (percentage > 100) percentage = 100;
+            progressBar.Value = percentage;
             string text = e.UserState as string;
             if (text != null )  console.Text += text + "\n";
         }
