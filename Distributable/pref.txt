@@ -1,6 +1,6 @@
 rootDirectory?
 manualBoot?False
 fullLog?False
-alwaysClean?False
+alwaysClean?True
 magicDirectory?
 Directorylimit?200000000

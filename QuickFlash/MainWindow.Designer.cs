@@ -215,7 +215,7 @@ namespace QuickFlash
             // preferencesToolStripMenuItem
             // 
             this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
-            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.preferencesToolStripMenuItem.Text = "Preferences";
             this.preferencesToolStripMenuItem.ToolTipText = "Settings and preference changes";
             this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.displayPreferences);
@@ -223,7 +223,7 @@ namespace QuickFlash
             // saveCurrentPresetToolStripMenuItem
             // 
             this.saveCurrentPresetToolStripMenuItem.Name = "saveCurrentPresetToolStripMenuItem";
-            this.saveCurrentPresetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveCurrentPresetToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.saveCurrentPresetToolStripMenuItem.Text = "Save Current Preset";
             this.saveCurrentPresetToolStripMenuItem.ToolTipText = "Saves the current settings";
             this.saveCurrentPresetToolStripMenuItem.Click += new System.EventHandler(this.savePreferences);
@@ -231,7 +231,7 @@ namespace QuickFlash
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
             this.helpToolStripMenuItem.Text = "Help";
             this.helpToolStripMenuItem.ToolTipText = "Displays help window";
             this.helpToolStripMenuItem.Click += new System.EventHandler(this.displayHelp);
@@ -272,6 +272,7 @@ namespace QuickFlash
             // 
             // folderBrowser
             // 
+            this.folderBrowser.Description = "Select BIOS Master Folder";
             this.folderBrowser.RootFolder = System.Environment.SpecialFolder.LocalizedResources;
             // 
             // MainWindow

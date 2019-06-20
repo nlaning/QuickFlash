@@ -44,7 +44,7 @@ namespace QuickFlash
         long limit = 200000000;
         private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker;
         string preferencesFile = "pref.txt"; //just incase a name change is necessary
-        string version = "1.31"; //probably should be replaced for proper versioning...
+        string version = "1.32"; //probably should be replaced for proper versioning...
         /* Main Window
         * first opening the program, (like main)
         * */
@@ -56,7 +56,9 @@ namespace QuickFlash
             Text = "QuickFlash " + version;
             console.Text += "Welcome to Quick Flash! (" + version + ")\nPlease select a file to begin or press " + '"' + "help" + '"' + "\n";
             loadPreferences("Pref.txt");
+            makeLink(magicDrivePath);
             listDirectory(fileViewer, path);
+
 
         }
 
@@ -215,7 +217,6 @@ namespace QuickFlash
                 {
                     //gather info            
                     string driveLetter = D.Name.ToString().Remove(2);
-
                     magicDrivesWorker.ReportProgress(progress,"loading Magic Drive " + driveLetter + " with necessary components...");
                     //loading drive with components
                     List<string> excludedFiles = new List<string>();
@@ -224,13 +225,15 @@ namespace QuickFlash
                     {
                         if (compareFiles(file, magicDrivePath + @"\" + file.Remove(0, 2)))
                         {
+                             magicDrivesWorker.ReportProgress(progress, magicDrivePath + @"\" + file.Remove(0, 2));
                             string[] fullFilePath = file.Split('\\');
                             excludedFiles.Add(fullFilePath[fullFilePath.Length-1]);
+                            magicDrivesWorker.ReportProgress(progress,fullFilePath[fullFilePath.Length-1]);
                         }
                     }
                     loadDrive(driveLetter, "INSTANT", drive.ToString());
                     if (fullLogButton.Checked) magicDrivesWorker.ReportProgress(progress, "moving files from " + fullPath + " ...");
-                    string[] cmd = { @"xcopy " + '"' + magicDrivePath + @"\" + "*" + '"' + " " + driveLetter + @" /e /h /i /y /c /EXCLUDE:exclude"+driveLetter.Split(':')[0]+".txt "/*>log" + driveLetter.Split(':')[0] + ".txt"*/ };
+                    string[] cmd = { @"xcopy " + '"' + magicDrivePath + @"\" + "*" + '"' + " " + driveLetter + @"\ /e /h /i /y /c /EXCLUDE:exclude"+driveLetter.Split(':')[0]+".txt > log" + driveLetter.Split(':')[0] + ".txt" };
                     createFile("copy" + driveLetter.Split(':')[0] + ".bat", cmd);
                     string[] excludedFilesArray = new string[excludedFiles.Count];
                     for(int i =0; i<excludedFiles.Count;i++)
@@ -270,9 +273,8 @@ namespace QuickFlash
             {
                 string[] f = file.Split('\\');
                 string extension = (f[f.Length - 1].Split('.'))[1].ToLower();
-                if (extension.Equals("bat") || extension.Equals("exe")) selectedFiles.Add(f[f.Length - 1].ToLower());
-            }
-           
+                if (extension.Equals("bat") /*|| extension.Equals("exe")*/) selectedFiles.Add(f[f.Length - 1].ToLower());//extension incase its ever needed, seemed like all runnables were bat files.
+            }         
             //if more then one file, but less then 10
             if (selectedFiles.Count < 9 && selectedFiles.Count != 0)
             {
@@ -352,7 +354,15 @@ namespace QuickFlash
             }
         }
 
-
+        private void makeLink(string address)
+        {
+            if (!magicDrivePath.Equals("")) { 
+                string[] contents = {"remdir magickLink","mklink /d magicLink " + '"'+ address + '"' };
+                createFile("links.bat", contents);
+                runBATFile("links.bat",true);
+                magicDrivePath = "magicLink";
+            }
+        }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////// FORMS //////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1097,7 +1107,7 @@ namespace QuickFlash
         {
             int percentage = e.ProgressPercentage;
             if (percentage > 100) percentage = 100;
-            progressBar.Value = percentage;
+            if (percentage >= 0 ) progressBar.Value = percentage;
             string text = e.UserState as string;
             if (text != null )  console.Text += text + "\n";
         }
