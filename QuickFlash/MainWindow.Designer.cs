@@ -143,6 +143,8 @@ namespace QuickFlash
             // alwaysCleanButton
             // 
             this.alwaysCleanButton.AutoSize = true;
+            this.alwaysCleanButton.Checked = true;
+            this.alwaysCleanButton.CheckState = System.Windows.Forms.CheckState.Checked;
             this.alwaysCleanButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.alwaysCleanButton.ForeColor = System.Drawing.SystemColors.ButtonFace;
             this.alwaysCleanButton.Location = new System.Drawing.Point(117, 188);
