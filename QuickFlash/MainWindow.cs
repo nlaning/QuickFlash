@@ -41,10 +41,12 @@ namespace QuickFlash
         string path = ""; //starting path.
         string magicDrivePath = ""; //for use in magic drives
         string fullPath = ""; //full path of file being moved
+        string fileDirectoryMissingPath= "";
         long limit = 200000000;
+        TreeNode directoryList = new TreeNode();
         private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker;
         string preferencesFile = "pref.txt"; //just incase a name change is necessary
-        string version = "1.33"; //probably should be replaced for proper versioning...
+        string version = "1.43"; //probably should be replaced for proper versioning...
         /* Main Window
         * first opening the program, (like main)
         * */
@@ -57,7 +59,8 @@ namespace QuickFlash
             console.Text += "Welcome to Quick Flash! (" + version + ")\nPlease select a file to begin or press " + '"' + "help" + '"' + "\n";
             loadPreferences("Pref.txt");
             makeLink(magicDrivePath);
-            listDirectory(fileViewer, path);
+            listDirectory(fileViewer,path/*, "ASrock"*/);
+            //searchFileViewer("");
 
 
         }
@@ -71,13 +74,13 @@ namespace QuickFlash
             console.Text += "building pathway\n";
             string[] pathParts = path.Split('\\');
             fullPath = "";
-            for (int i = 0; i < pathParts.Length - 1; i++)
-            {
-                fullPath += pathParts[i];
-                fullPath += '\\';
-            }
+            //for (int i = 0; i < pathParts.Length - 1; i++)
+            //{
+            //    fullPath += pathParts[i];
+            //    fullPath += '\\';
+            //}
 
-            fullPath += fileViewer.SelectedNode.FullPath;
+            fullPath = path + '\\'+ fileDirectoryMissingPath+fileViewer.SelectedNode.FullPath;
             flashDrivesWorker.RunWorkerAsync();
         }
 
@@ -394,6 +397,328 @@ namespace QuickFlash
                 }
             }
         }
+                private void SearchBox_TextChanged(object sender, EventArgs e)
+        {
+            if (!searchBox.Text.Equals("Click to Search..."))
+            {
+                searchFileViewer(searchBox.Text);
+            }
+        }
+        private void SearchBox_LostFocus(object sender, EventArgs e)
+        {
+            if (searchBox.Text.Equals("")) searchBox.Text = "Click to Search...";
+        }
+        private void SearchBox_GotFocus(object sender, EventArgs e)
+        {
+            if (searchBox.Text.Equals("Click to Search..."))
+            {
+                searchBox.Text = "";
+            }
+            else
+            {
+                searchBox.SelectAll();
+            }
+        }
+        private void listDirectory(TreeView treeView, string path)
+        {
+            try
+            {
+                treeView.Nodes.Clear();
+                var rootDirectoryInfo = new DirectoryInfo(path);
+                directoryList = createDirectoryNode(rootDirectoryInfo);
+                foreach (TreeNode node in directoryList.Nodes) treeView.Nodes.Add(node);
+            }
+            catch { };
+
+        }
+
+        private void searchFileViewer(string text)
+        {
+            fileViewer.Nodes.Clear();
+            fileDirectoryMissingPath = "";
+            TreeNode newNode = searchDirectory(directoryList, text);
+            while (newNode.Nodes.Count == 1)
+            {
+                TreeNode tempNode = (TreeNode)newNode.Nodes[0].Clone();
+                fileDirectoryMissingPath += tempNode.Text + '\\';
+                newNode.Nodes.Clear();
+                foreach (TreeNode node in tempNode.Nodes) newNode.Nodes.Add((TreeNode)node.Clone());
+            }
+            foreach (TreeNode node in newNode.Nodes) fileViewer.Nodes.Add(node);
+
+
+        }
+
+        private TreeNode searchDirectory(TreeNode node, string text)
+        {
+            TreeNode newNode = new TreeNode();
+            newNode.Text = node.Text;
+            foreach (TreeNode treenode in node.Nodes)
+            {
+                if (treenode.Text.ToLower().Contains(text.ToLower()))
+                {
+                    newNode.Nodes.Add((TreeNode)treenode.Clone());
+                }
+                else
+                {
+                    TreeNode directory = searchDirectory(treenode, text);
+                    if (directory.Nodes.Count > 0)
+                    {
+                        newNode.Nodes.Add(directory);
+                    }
+                }
+            }
+            return newNode;
+        }
+
+        /* Create Directory Node
+         * recursively called to populate all available directories (tree)
+         * is just passed the current directory location and branches from there
+         * 
+         * */
+        private TreeNode createDirectoryNode(DirectoryInfo directoryInfo)
+        {
+
+            var directoryNode = new TreeNode(directoryInfo.Name);
+            foreach (var directory in directoryInfo.GetDirectories())
+            {
+                try
+                {
+                    TreeNode N = createDirectoryNode(directory);
+                    if (N.Text != "EFI")
+                    {
+                        directoryNode.Nodes.Add(N);
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    console.Text += "Access denied to " + directory.Name + "\n";
+                }
+                catch (Exception)
+                {
+                    console.Text += "Unknown error at " + directory.Name + "\n";
+
+                }
+            }
+            return directoryNode;
+
+        }
+        
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////// FILE HANDLING //////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /* Compare Files
+         * Compares files to determine whether or not they are the same
+         * currrently only checks size, has the ability to check each byte but is cuurently disabled
+         * due to how long it takes. But I left it in here incase more precision is ever needed
+         * 
+         * */
+        public bool compareFiles(string filePath1, string filePath2)
+        {
+            FileInfo File1 = new FileInfo(filePath1);
+            FileInfo File2 = new FileInfo(filePath2);
+            if (!File1.Exists || !File2.Exists) return false;
+            if (File1.Length != File2.Length) return false;
+            //int byteSize = sizeof(long);
+            //using (FileStream stream1 = File1.OpenRead())
+            //using (FileStream stream2 = File2.OpenRead())
+            //{
+            //    byte[] byte1 = new byte[byteSize];
+            //    byte[] byte2 = new byte[byteSize];
+
+            //    for (int i = 0; i < File1.Length; i++)
+            //    {
+            //        stream1.Read(byte1, 0, byteSize);
+            //        stream2.Read(byte2, 0, byteSize);
+
+            //        if (BitConverter.ToInt64(byte1, 0) != BitConverter.ToInt64(byte2, 0))
+            //            return false;
+            //    }
+            //}
+            return true;
+        }
+
+        /* Get Files
+         * recursively gathers files by path
+         * 
+         * */
+        private List<string> getFilePath(string path)
+        {
+            
+            List<string> allFiles = new List<string>();
+            try
+            {
+                List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
+                List<string> files = new List<string>(Directory.EnumerateFiles(path));
+                allFiles.AddRange(files);
+                foreach (string directory in directories)
+                {
+                    allFiles.AddRange(getFilePath(directory));
+                }
+            }
+            catch
+            {
+               
+            }
+            return allFiles;
+        }
+
+        /* Run BAT file
+        * Runs a specified BAT file in the background, it is also capable of waiting for completetion
+        * for programs like diskpart that dont like to be instanced. there is also a manually placed delay 
+        * regardless for similar reasons although cmd has less issues thus the set delay 
+        * takes a filename and a boolean as to whether it needs to wait, i.e
+        * "flash.BAT",true
+        * */
+        private void runBATFile(string filename, bool wait)
+        {
+            ProcessStartInfo BatchProcess;
+            Process process;
+            BatchProcess = new ProcessStartInfo("cmd.exe", "/c " + filename);
+            BatchProcess.CreateNoWindow = true;
+            BatchProcess.UseShellExecute = false;
+            process = Process.Start(BatchProcess);
+            if (wait)
+            {
+                process.WaitForExit();
+            }
+            else System.Threading.Thread.Sleep(200);
+        }
+
+        /*Create File
+         * Creates a file based on the names and the lines it needs
+         * the lines are in array form to avoid the necessity to add 
+         * \n's to the input allowing for easier visability when using the program
+         * takes a name and the lines i.e.
+         * "file.txt",{"line 1","line 2"}
+         * 
+         * */
+        private void createFile(String name, String[] lines)
+        {
+
+            if (File.Exists(name))
+            {
+                File.Delete(name);
+            }
+            StreamWriter writer = new StreamWriter(name);
+            foreach (String line in lines)
+            {
+                writer.WriteLine(line);
+            }
+            writer.Close();
+        }
+        /* Override Rights
+         * 
+         * 
+         * */
+        private void overrideAllRights(string path)
+        {
+            
+            List<string> fileList = getFilePath(path);
+            foreach (string file in fileList)
+            {
+                try
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                }
+                catch
+                {
+                    console.Text += file + " has protected rights\n";
+                };
+            }
+        }
+        /*Remove Old Files
+         * Removes files that exist in one directory but not the other, excluding key system files
+         * 
+         * */
+        private void removeOldFiles(string sourceDirectory,string installerType,int progress,BackgroundWorker worker)
+        {
+            
+            List<string> Exclusions = new List<string>();
+            Exclusions.Add("IndexerVolumeGuid");
+            Exclusions.Add("WPSettings.dat" );
+            //Exclusions.Add("ldlinux.c32");
+            //Exclusions.Add("ldlinux.sys");
+            if (installerType == "DOS")
+            {
+                List<string> DOSExclusions = getFilePath("DOS");
+                foreach (string DOSFile in DOSExclusions)
+                {
+                    string[] splitFiles = DOSFile.Split('\\');
+                    Exclusions.Add(splitFiles[splitFiles.Length - 1]);
+                }
+            }
+            DriveInfo[] allDrives = DriveInfo.GetDrives();
+            foreach (DriveInfo D in allDrives)
+            {
+                //determine if thumbdrive
+                if (D.DriveType.ToString().Equals("Removable"))
+                {
+                    
+                    string hostDirectory = D.Name;
+                    worker.ReportProgress(progress,"Cleaning "+ hostDirectory);
+                    List<string> fileList = getFilePath(D.Name);
+                    
+                    foreach (string file in fileList)
+                    {
+                        //console.Text += file + "\n";
+                        if (!File.Exists(sourceDirectory + file.Remove(0, hostDirectory.Length-1)))
+                        {
+                            string[] splitFiles = file.Split('\\');
+                            if (!Exclusions.Contains(splitFiles[splitFiles.Length - 1]))
+                            {
+                                try
+                                {
+                                    File.SetAttributes(file, FileAttributes.Normal);
+                                    File.Delete(file);
+                                }
+                                catch
+                                {
+                                    worker.ReportProgress(progress, "Error occured while Deleting " + file );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /* Get Files
+         * recursively gathers size information from files, and returns the total size in bytes
+         * 
+         * */
+        private long getFileSize(string path)
+        {
+            List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
+            List<string> files = new List<string>(Directory.EnumerateFiles(path));
+            long total = 0;
+            foreach (string file in files)
+            {
+                total += new FileInfo(file).Length;
+            }
+            foreach (string directory in directories)
+            {
+                total += getFileSize(directory);
+            }
+            return total;
+        }
+
+        /* Copy Selected File
+         * copies the selected path, for excclusive use, could be either improved
+         * to be more generic or depricated completely infavor of on use cases
+         * takes a Drive Variable (i.e "D:")
+         * */
+        private void copySelectedFile(string drive)
+        {
+           
+            string folderToMove = fullPath;
+            string[] cmd = { @"xcopy " + '"' + folderToMove + '\\' + "*" + '"' + " " + drive + @" /e /h /i /y /c >log" + drive.Split(':')[0] + ".txt" };
+            drive = drive.Split(':')[0];
+            createFile("copy" + drive + ".bat", cmd);
+            runBATFile("copy" + drive + ".bat", false);
+
+        }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////// DRIVE TOOLS ////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -617,224 +942,8 @@ namespace QuickFlash
                 Thread.Sleep(100);
                 checkDrivesWorker.ReportProgress(0, display);
             }
-            
-        }
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////// FILE HANDLING //////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /* Compare Files
-         * Compares files to determine whether or not they are the same
-         * currrently only checks size, has the ability to check each byte but is cuurently disabled
-         * due to how long it takes. But I left it in here incase more precision is ever needed
-         * 
-         * */
-        public bool compareFiles(string filePath1, string filePath2)
-        {
-            FileInfo File1 = new FileInfo(filePath1);
-            FileInfo File2 = new FileInfo(filePath2);
-            if (!File1.Exists || !File2.Exists) return false;
-            if (File1.Length != File2.Length) return false;
-            //int byteSize = sizeof(long);
-            //using (FileStream stream1 = File1.OpenRead())
-            //using (FileStream stream2 = File2.OpenRead())
-            //{
-            //    byte[] byte1 = new byte[byteSize];
-            //    byte[] byte2 = new byte[byteSize];
-
-            //    for (int i = 0; i < File1.Length; i++)
-            //    {
-            //        stream1.Read(byte1, 0, byteSize);
-            //        stream2.Read(byte2, 0, byteSize);
-
-            //        if (BitConverter.ToInt64(byte1, 0) != BitConverter.ToInt64(byte2, 0))
-            //            return false;
-            //    }
-            //}
-            return true;
-        }
-
-        /* Get Files
-         * recursively gathers files by path
-         * 
-         * */
-        private List<string> getFilePath(string path)
-        {
-            
-            List<string> allFiles = new List<string>();
-            try
-            {
-                List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
-                List<string> files = new List<string>(Directory.EnumerateFiles(path));
-                allFiles.AddRange(files);
-                foreach (string directory in directories)
-                {
-                    allFiles.AddRange(getFilePath(directory));
-                }
-            }
-            catch
-            {
-               
-            }
-            return allFiles;
-        }
-
-        /* Run BAT file
-        * Runs a specified BAT file in the background, it is also capable of waiting for completetion
-        * for programs like diskpart that dont like to be instanced. there is also a manually placed delay 
-        * regardless for similar reasons although cmd has less issues thus the set delay 
-        * takes a filename and a boolean as to whether it needs to wait, i.e
-        * "flash.BAT",true
-        * */
-        private void runBATFile(string filename, bool wait)
-        {
-            ProcessStartInfo BatchProcess;
-            Process process;
-            BatchProcess = new ProcessStartInfo("cmd.exe", "/c " + filename);
-            BatchProcess.CreateNoWindow = true;
-            BatchProcess.UseShellExecute = false;
-            process = Process.Start(BatchProcess);
-            if (wait)
-            {
-                process.WaitForExit();
-            }
-            else System.Threading.Thread.Sleep(200);
-        }
-
-        /*Create File
-         * Creates a file based on the names and the lines it needs
-         * the lines are in array form to avoid the necessity to add 
-         * \n's to the input allowing for easier visability when using the program
-         * takes a name and the lines i.e.
-         * "file.txt",{"line 1","line 2"}
-         * 
-         * */
-        private void createFile(String name, String[] lines)
-        {
-
-            if (File.Exists(name))
-            {
-                File.Delete(name);
-            }
-            StreamWriter writer = new StreamWriter(name);
-            foreach (String line in lines)
-            {
-                writer.WriteLine(line);
-            }
-            writer.Close();
-        }
-        /* Override Rights
-         * 
-         * 
-         * */
-        private void overrideAllRights(string path)
-        {
-            
-            List<string> fileList = getFilePath(path);
-            foreach (string file in fileList)
-            {
-                try
-                {
-                    File.SetAttributes(file, FileAttributes.Normal);
-                }
-                catch
-                {
-                    console.Text += file + " has protected rights\n";
-                };
-            }
-        }
-        /*Remove Old Files
-         * Removes files that exist in one directory but not the other, excluding key system files
-         * 
-         * */
-        private void removeOldFiles(string sourceDirectory,string installerType,int progress,BackgroundWorker worker)
-        {
-            
-            List<string> Exclusions = new List<string>();
-            Exclusions.Add("IndexerVolumeGuid");
-            Exclusions.Add("WPSettings.dat" );
-            //Exclusions.Add("ldlinux.c32");
-            //Exclusions.Add("ldlinux.sys");
-            if (installerType == "DOS")
-            {
-                List<string> DOSExclusions = getFilePath("DOS");
-                foreach (string DOSFile in DOSExclusions)
-                {
-                    string[] splitFiles = DOSFile.Split('\\');
-                    Exclusions.Add(splitFiles[splitFiles.Length - 1]);
-                }
-            }
-            DriveInfo[] allDrives = DriveInfo.GetDrives();
-            foreach (DriveInfo D in allDrives)
-            {
-                //determine if thumbdrive
-                if (D.DriveType.ToString().Equals("Removable"))
-                {
-                    
-                    string hostDirectory = D.Name;
-                    worker.ReportProgress(progress,"Cleaning "+ hostDirectory);
-                    List<string> fileList = getFilePath(D.Name);
-                    
-                    foreach (string file in fileList)
-                    {
-                        //console.Text += file + "\n";
-                        if (!File.Exists(sourceDirectory + file.Remove(0, hostDirectory.Length-1)))
-                        {
-                            string[] splitFiles = file.Split('\\');
-                            if (!Exclusions.Contains(splitFiles[splitFiles.Length - 1]))
-                            {
-                                try
-                                {
-                                    File.SetAttributes(file, FileAttributes.Normal);
-                                    File.Delete(file);
-                                }
-                                catch
-                                {
-                                    worker.ReportProgress(progress, "Error occured while Deleting " + file );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /* Get Files
-         * recursively gathers size information from files, and returns the total size in bytes
-         * 
-         * */
-        private long getFileSize(string path)
-        {
-            List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
-            List<string> files = new List<string>(Directory.EnumerateFiles(path));
-            long total = 0;
-            foreach (string file in files)
-            {
-                total += new FileInfo(file).Length;
-            }
-            foreach (string directory in directories)
-            {
-                total += getFileSize(directory);
-            }
-            return total;
-        }
-
-        /* Copy Selected File
-         * copies the selected path, for excclusive use, could be either improved
-         * to be more generic or depricated completely infavor of on use cases
-         * takes a Drive Variable (i.e "D:")
-         * */
-        private void copySelectedFile(string drive)
-        {
-           
-            string folderToMove = fullPath;
-            string[] cmd = { @"xcopy " + '"' + folderToMove + '\\' + "*" + '"' + " " + drive + @" /e /h /i /y /c >log" + drive.Split(':')[0] + ".txt" };
-            drive = drive.Split(':')[0];
-            createFile("copy" + drive + ".bat", cmd);
-            runBATFile("copy" + drive + ".bat", false);
 
         }
-
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1017,68 +1126,8 @@ namespace QuickFlash
          * only cares about directories
          * takes the TreeView it would like to change, and the path of the specified folder
          * */
-        private void listDirectory(TreeView treeView, string path)
-        {
-            try
-            {
-                treeView.Nodes.Clear();
-                var rootDirectoryInfo = new DirectoryInfo(path);
-                treeView.Nodes.Add(createDirectoryNode(rootDirectoryInfo));
-            }
-            catch (ArgumentException)
-            {
-                //browseForFolder(this, null);
-            }
-            catch (IOException)
-            {
-                //browseForFolder(this, null);
-            }
-            
-        }
 
-        /* Create Directory Node
-         * recursively called to populate all available directories (tree)
-         * is just passed the current directory location and branches from there
-         * 
-         * */
-        private TreeNode createDirectoryNode(DirectoryInfo directoryInfo)
-        {
-
-            var directoryNode = new TreeNode(directoryInfo.Name);
-            foreach (var directory in directoryInfo.GetDirectories())
-            {
-                try
-                {
-                    TreeNode N = createDirectoryNode(directory);
-                    if (N.Text != "EFI")
-                    {
-                        directoryNode.Nodes.Add(N);
-                    }
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    console.Text += "Access denied to " + directory.Name + "\n";
-                }
-                catch (Exception)
-                {
-                    console.Text += "Unknown error at " + directory.Name + "\n";
-
-                }
-            }
-            return directoryNode;
-
-        }
-
-        //private void SearchTree(TreeView treeView, string name)
-        //{
-        //    TreeNode[] newNodes = new TreeNode[treeView.Nodes.r;
-        //    treeView.Nodes.CopyTo(newNodes,0);
-        //    TreeNodeCollection treeNodes = treeView.Nodes;
-        //    foreach(TreeNode node in treeNodes)
-        //    {
-                
-        //    }
-        //}
+        
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////// THREADING STUFF //////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1120,6 +1169,8 @@ namespace QuickFlash
             buttonEnabler(true);
             console.Text += "Process Complete!\n";
         }
+
+
 
         /* Wait to finish
          * waits for all running (cmd)processes to complete

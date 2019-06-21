@@ -33,6 +33,7 @@ namespace QuickFlash
             System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Node0");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.searchBox = new System.Windows.Forms.TextBox();
             this.fileViewer = new System.Windows.Forms.TreeView();
             this.label1 = new System.Windows.Forms.Label();
             this.fullLogButton = new System.Windows.Forms.CheckBox();
@@ -68,6 +69,7 @@ namespace QuickFlash
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.searchBox);
             this.splitContainer1.Panel1.Controls.Add(this.fileViewer);
             // 
             // splitContainer1.Panel2
@@ -85,6 +87,20 @@ namespace QuickFlash
             this.splitContainer1.SplitterDistance = 355;
             this.splitContainer1.TabIndex = 0;
             // 
+            // searchBox
+            // 
+            this.searchBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.searchBox.Location = new System.Drawing.Point(4, 4);
+            this.searchBox.Name = "searchBox";
+            this.searchBox.Size = new System.Drawing.Size(352, 20);
+            this.searchBox.TabIndex = 1;
+            this.searchBox.Text = "Click to Search...";
+            this.searchBox.TextChanged += new System.EventHandler(this.SearchBox_TextChanged);
+            this.searchBox.GotFocus += new System.EventHandler(this.SearchBox_GotFocus);
+            this.searchBox.LostFocus += new System.EventHandler(this.SearchBox_LostFocus);
+            // 
             // fileViewer
             // 
             this.fileViewer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -95,13 +111,13 @@ namespace QuickFlash
             this.fileViewer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fileViewer.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.fileViewer.LineColor = System.Drawing.Color.FromArgb(((int)(((byte)(82)))), ((int)(((byte)(88)))), ((int)(((byte)(102)))));
-            this.fileViewer.Location = new System.Drawing.Point(0, 0);
+            this.fileViewer.Location = new System.Drawing.Point(0, 28);
             this.fileViewer.Name = "fileViewer";
             treeNode1.Name = "Node0";
             treeNode1.Text = "Node0";
             this.fileViewer.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
             treeNode1});
-            this.fileViewer.Size = new System.Drawing.Size(355, 507);
+            this.fileViewer.Size = new System.Drawing.Size(355, 479);
             this.fileViewer.TabIndex = 0;
             // 
             // label1
@@ -289,6 +305,7 @@ namespace QuickFlash
             this.Name = "MainWindow";
             this.Text = "Quick Flash 0.04";
             this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -299,7 +316,7 @@ namespace QuickFlash
 
         }
 
-   
+
 
 
 
@@ -326,6 +343,7 @@ namespace QuickFlash
         private System.Windows.Forms.ToolStripMenuItem outputConsoleToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveCurrentPresetToolStripMenuItem;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox searchBox;
     }
 }
 
