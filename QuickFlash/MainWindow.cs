@@ -31,12 +31,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-
+using static FileTools;
 namespace QuickFlash
 {
     public partial class MainWindow : Form
 
     {
+        string workingDirectory = System.Reflection.Assembly.GetExecutingAssembly().Location.Remove(System.Reflection.Assembly.GetExecutingAssembly().Location.Length-14);
+
         double increment = 0; //for use in progress bar
         string path = ""; //starting path.
         string magicDrivePath = ""; //for use in magic drives
@@ -46,12 +48,13 @@ namespace QuickFlash
         TreeNode directoryList = new TreeNode();
         private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker;
         string preferencesFile = "pref.txt"; //just incase a name change is necessary
-        string version = "1.43"; //probably should be replaced for proper versioning...
+        string version = "1.51"; //probably should be replaced for proper versioning...
         /* Main Window
         * first opening the program, (like main)
         * */
         public MainWindow()
         {
+            
             clearOutCMDProccesses();
             InitializeComponent();
             loadWorkers();
@@ -61,13 +64,12 @@ namespace QuickFlash
             makeLink(magicDrivePath);
             listDirectory(fileViewer,path/*, "ASrock"*/);
             //searchFileViewer("");
+            getSheetData();
+            console.Text += workingDirectory;
 
 
         }
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////// CORE FUNCTIONS /////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void flashDrivesClick(object sender, EventArgs e)
         {
             buttonEnabler(false);
@@ -84,28 +86,7 @@ namespace QuickFlash
             flashDrivesWorker.RunWorkerAsync();
         }
 
-        private void magicDrivesClick(object sender, EventArgs e)
-        {
-            buttonEnabler(false);
-            console.Text += "building pathway\n";
-            //if empty prompt for a new directory
-            if (magicDrivePath.Equals("") || !Directory.Exists(magicDrivePath))
-            {
-                DialogResult result = folderBrowser.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    console.Text += "New Magic Drive directory selected at:\n" + folderBrowser.SelectedPath + "\n";
-                    magicDrivePath = folderBrowser.SelectedPath;
-                }
-                else
-                {
-                    buttonEnabler(true);
-                    return;
-                }
-            }
-            findMagicFolder();
-            magicDrivesWorker.RunWorkerAsync();
-        }
+       
 
         /* Flash Drives
         *   ________________
@@ -195,68 +176,6 @@ namespace QuickFlash
 
         }
 
-        /*Flash Magic Drives
-         *
-         * Moves necessary files to magic drives, DOES NOT format them, in other words
-         * this will not create new magic drives, just updates current ones. this is done to save immense time since
-         * creating a new one everytime would require formatting and diskpart doesnt like running in multiple instances 
-         * therefor the slowdown would be immense
-         * 
-         * Furthermore the directory is manually placed into the preferences file (pref.txt)
-         * this is to prevent tampering as theoretically this directory will never change
-         * But does prompt the user if either the current folder does not exist or the preferences file is not saved
-         * 
-         * */
-        private void flashMagicFlashDrives(object sender, DoWorkEventArgs e)
-        {
-            int progress=5;
-            DriveInfo[] allDrives = DriveInfo.GetDrives();
-            magicDrivesWorker.ReportProgress(progress, "Gathering Magic Flash Drives...");
-            int drive = 0;
-            foreach (DriveInfo D in allDrives)
-            {
-                //determine if thumbdrive
-                if (D.DriveType.ToString().Equals("Removable"))
-                {
-                    //gather info            
-                    string driveLetter = D.Name.ToString().Remove(2);
-                    magicDrivesWorker.ReportProgress(progress,"loading Magic Drive " + driveLetter + " with necessary components...");
-                    //loading drive with components
-                    List<string> excludedFiles = new List<string>();
-                    List<string> driveFiles = getFilePath(driveLetter+@"\");
-                    foreach(string file in driveFiles)
-                    {
-                        if (compareFiles(file, magicDrivePath + @"\" + file.Remove(0, 2)))
-                        {
-                             magicDrivesWorker.ReportProgress(progress, magicDrivePath + @"\" + file.Remove(0, 2));
-                            string[] fullFilePath = file.Split('\\');
-                            excludedFiles.Add(fullFilePath[fullFilePath.Length-1]);
-                            magicDrivesWorker.ReportProgress(progress,fullFilePath[fullFilePath.Length-1]);
-                        }
-                    }
-                    loadDrive(driveLetter, "INSTANT", drive.ToString());
-                    if (fullLogButton.Checked) magicDrivesWorker.ReportProgress(progress, "moving files from " + fullPath + " ...");
-                    string[] cmd = { @"xcopy " + '"' + magicDrivePath + @"\" + "*" + '"' + " " + driveLetter + @"\ /e /h /i /y /c /EXCLUDE:exclude"+driveLetter.Split(':')[0]+".txt > log" + driveLetter.Split(':')[0] + ".txt" };
-                    createFile("copy" + driveLetter.Split(':')[0] + ".bat", cmd);
-                    string[] excludedFilesArray = new string[excludedFiles.Count];
-                    for(int i =0; i<excludedFiles.Count;i++)
-                    {
-                        excludedFilesArray[i] = excludedFiles[i];
-                    }
-                    createFile("exclude" + driveLetter.Split(':')[0]+".txt", excludedFilesArray);
-                    runBATFile("copy" + driveLetter.Split(':')[0] + ".bat", false);
-
-                }
-                drive++;
-            }
-            progress += 5;
-            magicDrivesWorker.ReportProgress(progress, "Waiting for all files to transfer...");
-            //finishing up, waits for cmd to stop proccessing
-            waitForFinish(progress, magicDrivesWorker);
-            magicDrivesWorker.ReportProgress(progress, "Removing old Files...");
-            removeOldFiles(magicDrivePath, "none",progress, magicDrivesWorker);
-            waitForFinish(progress, magicDrivesWorker);
-        }
  
         /* Generate AUTOEXEC
          * Creates an AUTOEXEC batch file to automate or make choosing a file without typing
@@ -343,19 +262,6 @@ namespace QuickFlash
 
         }
 
-        private void findMagicFolder()
-        {
-            //find folder to copy
-            List<string> directories = new List<string>(Directory.EnumerateDirectories(magicDrivePath));
-            foreach (string directory in directories)
-            {
-                string[] dir = directory.Split('\\');
-                string name = dir[dir.Length - 1];
-                if (name.Split('_').Length > 1) magicDrivePath = directory;
-                if (fullLogButton.Checked) console.Text += magicDrivePath + "\nselected as file path\n";
-                return;
-            }
-        }
 
         private void makeLink(string address)
         {
@@ -366,587 +272,12 @@ namespace QuickFlash
                 magicDrivePath = "magicLink";
             }
         }
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////// FORMS //////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /* Display Help
-         * Does exactly what one might think, deploys a help screen in a new window/form
-         * */
-        private void displayHelp(object sender, EventArgs e)
-        {
-            var form = new Help();
-            form.Show();
-        }
-
-        /* Display Preferences
-         * Displays preference menu to change aspects and behavior of the program
-         * 
-         * */
-        private void displayPreferences(object sender, EventArgs e)
-        {
-            using (var form = new Preferences(path, magicDrivePath, limit))
-            {
-                if (form.ShowDialog() == DialogResult.OK)
-                {
-                    path = form.newBiosLocation;
-                    magicDrivePath = form.newMagicLocation;
-                    limit = form.newByteLimit;
-                    listDirectory(fileViewer, path);
-                    savePreferences(this, null);
-
-                }
-            }
-        }
-                private void SearchBox_TextChanged(object sender, EventArgs e)
-        {
-            if (!searchBox.Text.Equals("Click to Search..."))
-            {
-                searchFileViewer(searchBox.Text);
-            }
-        }
-        private void SearchBox_LostFocus(object sender, EventArgs e)
-        {
-            if (searchBox.Text.Equals("")) searchBox.Text = "Click to Search...";
-        }
-        private void SearchBox_GotFocus(object sender, EventArgs e)
-        {
-            if (searchBox.Text.Equals("Click to Search..."))
-            {
-                searchBox.Text = "";
-            }
-            else
-            {
-                searchBox.SelectAll();
-            }
-        }
-        private void listDirectory(TreeView treeView, string path)
-        {
-            try
-            {
-                treeView.Nodes.Clear();
-                var rootDirectoryInfo = new DirectoryInfo(path);
-                directoryList = createDirectoryNode(rootDirectoryInfo);
-                foreach (TreeNode node in directoryList.Nodes) treeView.Nodes.Add(node);
-            }
-            catch { };
-
-        }
-
-        private void searchFileViewer(string text)
-        {
-            fileViewer.Nodes.Clear();
-            fileDirectoryMissingPath = "";
-            TreeNode newNode = searchDirectory(directoryList, text);
-            while (newNode.Nodes.Count == 1)
-            {
-                TreeNode tempNode = (TreeNode)newNode.Nodes[0].Clone();
-                fileDirectoryMissingPath += tempNode.Text + '\\';
-                newNode.Nodes.Clear();
-                foreach (TreeNode node in tempNode.Nodes) newNode.Nodes.Add((TreeNode)node.Clone());
-            }
-            foreach (TreeNode node in newNode.Nodes) fileViewer.Nodes.Add(node);
 
 
-        }
-
-        private TreeNode searchDirectory(TreeNode node, string text)
-        {
-            TreeNode newNode = new TreeNode();
-            newNode.Text = node.Text;
-            foreach (TreeNode treenode in node.Nodes)
-            {
-                if (treenode.Text.ToLower().Contains(text.ToLower()))
-                {
-                    newNode.Nodes.Add((TreeNode)treenode.Clone());
-                }
-                else
-                {
-                    TreeNode directory = searchDirectory(treenode, text);
-                    if (directory.Nodes.Count > 0)
-                    {
-                        newNode.Nodes.Add(directory);
-                    }
-                }
-            }
-            return newNode;
-        }
-
-        /* Create Directory Node
-         * recursively called to populate all available directories (tree)
-         * is just passed the current directory location and branches from there
-         * 
-         * */
-        private TreeNode createDirectoryNode(DirectoryInfo directoryInfo)
-        {
-
-            var directoryNode = new TreeNode(directoryInfo.Name);
-            foreach (var directory in directoryInfo.GetDirectories())
-            {
-                try
-                {
-                    TreeNode N = createDirectoryNode(directory);
-                    if (N.Text != "EFI")
-                    {
-                        directoryNode.Nodes.Add(N);
-                    }
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    console.Text += "Access denied to " + directory.Name + "\n";
-                }
-                catch (Exception)
-                {
-                    console.Text += "Unknown error at " + directory.Name + "\n";
-
-                }
-            }
-            return directoryNode;
-
-        }
-        
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////// FILE HANDLING //////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /* Compare Files
-         * Compares files to determine whether or not they are the same
-         * currrently only checks size, has the ability to check each byte but is cuurently disabled
-         * due to how long it takes. But I left it in here incase more precision is ever needed
-         * 
-         * */
-        public bool compareFiles(string filePath1, string filePath2)
-        {
-            FileInfo File1 = new FileInfo(filePath1);
-            FileInfo File2 = new FileInfo(filePath2);
-            if (!File1.Exists || !File2.Exists) return false;
-            if (File1.Length != File2.Length) return false;
-            //int byteSize = sizeof(long);
-            //using (FileStream stream1 = File1.OpenRead())
-            //using (FileStream stream2 = File2.OpenRead())
-            //{
-            //    byte[] byte1 = new byte[byteSize];
-            //    byte[] byte2 = new byte[byteSize];
-
-            //    for (int i = 0; i < File1.Length; i++)
-            //    {
-            //        stream1.Read(byte1, 0, byteSize);
-            //        stream2.Read(byte2, 0, byteSize);
-
-            //        if (BitConverter.ToInt64(byte1, 0) != BitConverter.ToInt64(byte2, 0))
-            //            return false;
-            //    }
-            //}
-            return true;
-        }
-
-        /* Get Files
-         * recursively gathers files by path
-         * 
-         * */
-        private List<string> getFilePath(string path)
-        {
-            
-            List<string> allFiles = new List<string>();
-            try
-            {
-                List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
-                List<string> files = new List<string>(Directory.EnumerateFiles(path));
-                allFiles.AddRange(files);
-                foreach (string directory in directories)
-                {
-                    allFiles.AddRange(getFilePath(directory));
-                }
-            }
-            catch
-            {
-               
-            }
-            return allFiles;
-        }
-
-        /* Run BAT file
-        * Runs a specified BAT file in the background, it is also capable of waiting for completetion
-        * for programs like diskpart that dont like to be instanced. there is also a manually placed delay 
-        * regardless for similar reasons although cmd has less issues thus the set delay 
-        * takes a filename and a boolean as to whether it needs to wait, i.e
-        * "flash.BAT",true
-        * */
-        private void runBATFile(string filename, bool wait)
-        {
-            ProcessStartInfo BatchProcess;
-            Process process;
-            BatchProcess = new ProcessStartInfo("cmd.exe", "/c " + filename);
-            BatchProcess.CreateNoWindow = true;
-            BatchProcess.UseShellExecute = false;
-            process = Process.Start(BatchProcess);
-            if (wait)
-            {
-                process.WaitForExit();
-            }
-            else System.Threading.Thread.Sleep(200);
-        }
-
-        /*Create File
-         * Creates a file based on the names and the lines it needs
-         * the lines are in array form to avoid the necessity to add 
-         * \n's to the input allowing for easier visability when using the program
-         * takes a name and the lines i.e.
-         * "file.txt",{"line 1","line 2"}
-         * 
-         * */
-        private void createFile(String name, String[] lines)
-        {
-
-            if (File.Exists(name))
-            {
-                File.Delete(name);
-            }
-            StreamWriter writer = new StreamWriter(name);
-            foreach (String line in lines)
-            {
-                writer.WriteLine(line);
-            }
-            writer.Close();
-        }
-        /* Override Rights
-         * 
-         * 
-         * */
-        private void overrideAllRights(string path)
-        {
-            
-            List<string> fileList = getFilePath(path);
-            foreach (string file in fileList)
-            {
-                try
-                {
-                    File.SetAttributes(file, FileAttributes.Normal);
-                }
-                catch
-                {
-                    console.Text += file + " has protected rights\n";
-                };
-            }
-        }
-        /*Remove Old Files
-         * Removes files that exist in one directory but not the other, excluding key system files
-         * 
-         * */
-        private void removeOldFiles(string sourceDirectory,string installerType,int progress,BackgroundWorker worker)
-        {
-            
-            List<string> Exclusions = new List<string>();
-            Exclusions.Add("IndexerVolumeGuid");
-            Exclusions.Add("WPSettings.dat" );
-            //Exclusions.Add("ldlinux.c32");
-            //Exclusions.Add("ldlinux.sys");
-            if (installerType == "DOS")
-            {
-                List<string> DOSExclusions = getFilePath("DOS");
-                foreach (string DOSFile in DOSExclusions)
-                {
-                    string[] splitFiles = DOSFile.Split('\\');
-                    Exclusions.Add(splitFiles[splitFiles.Length - 1]);
-                }
-            }
-            DriveInfo[] allDrives = DriveInfo.GetDrives();
-            foreach (DriveInfo D in allDrives)
-            {
-                //determine if thumbdrive
-                if (D.DriveType.ToString().Equals("Removable"))
-                {
-                    
-                    string hostDirectory = D.Name;
-                    worker.ReportProgress(progress,"Cleaning "+ hostDirectory);
-                    List<string> fileList = getFilePath(D.Name);
-                    
-                    foreach (string file in fileList)
-                    {
-                        //console.Text += file + "\n";
-                        if (!File.Exists(sourceDirectory + file.Remove(0, hostDirectory.Length-1)))
-                        {
-                            string[] splitFiles = file.Split('\\');
-                            if (!Exclusions.Contains(splitFiles[splitFiles.Length - 1]))
-                            {
-                                try
-                                {
-                                    File.SetAttributes(file, FileAttributes.Normal);
-                                    File.Delete(file);
-                                }
-                                catch
-                                {
-                                    worker.ReportProgress(progress, "Error occured while Deleting " + file );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /* Get Files
-         * recursively gathers size information from files, and returns the total size in bytes
-         * 
-         * */
-        private long getFileSize(string path)
-        {
-            List<string> directories = new List<string>(Directory.EnumerateDirectories(path));
-            List<string> files = new List<string>(Directory.EnumerateFiles(path));
-            long total = 0;
-            foreach (string file in files)
-            {
-                total += new FileInfo(file).Length;
-            }
-            foreach (string directory in directories)
-            {
-                total += getFileSize(directory);
-            }
-            return total;
-        }
-
-        /* Copy Selected File
-         * copies the selected path, for excclusive use, could be either improved
-         * to be more generic or depricated completely infavor of on use cases
-         * takes a Drive Variable (i.e "D:")
-         * */
-        private void copySelectedFile(string drive)
-        {
-           
-            string folderToMove = fullPath;
-            string[] cmd = { @"xcopy " + '"' + folderToMove + '\\' + "*" + '"' + " " + drive + @" /e /h /i /y /c >log" + drive.Split(':')[0] + ".txt" };
-            drive = drive.Split(':')[0];
-            createFile("copy" + drive + ".bat", cmd);
-            runBATFile("copy" + drive + ".bat", false);
-
-        }
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////// DRIVE TOOLS ////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /* Determine Type 
-         * determines given the file(s) selected how the software 
-         * should behave, looking for four main cases:
-         * 1: no files or too large of file(s) tripping a request to pick a new directory <--- still working on this!
-         * 2: determines the directory to be of DOS importance
-         * 3: determines the directory to be of EFI importance
-         * 4: determines the directory to be of INSTANT importance
-         * 5: an undetermined state by which the user will need to select the the type
-         * these will output strings in the order following above
-         * "DOS","EFI","INSTANT"
-         **/
-        private string determineType()
-        {
-            string returnValue = "Instant";
-            bool DOS = false;
-            bool UEFI = false;
-            //browse all files on drive;
-            //look for EFI(uefi),BAT or EXE(DOS), or neither for instant. if both, query a select
-            List<string> directories = new List<string>(Directory.EnumerateDirectories(fullPath));
-            List<string> files = new List<string>(Directory.EnumerateFiles(fullPath));
-            foreach (string directory in directories)
-            {
-                string[] dir = directory.Split('\\');
-                string name = dir[dir.Length - 1].ToLower();
-                if (name.Equals("efi")) UEFI = true;
-                if (name.ToLower().Equals("dos")) DOS = true;
-            }
-            foreach (string file in files)
-            {
-                string[] f = file.Split('\\');
-                string extension = (f[f.Length - 1].Split('.'))[1].ToLower();
-                if (extension.Equals("bat") || extension.Equals("exe")) DOS = true;
-                if (extension.Equals("efi")) UEFI = true;
-            }
-            if (DOS)
-            {
-                returnValue = "DOS";
-            }
-            if (UEFI)
-            {
-                returnValue = "UEFI";
-            }
-            if ((DOS && UEFI) || manualBootSelectButton.Checked)
-            {
-                using (var form = new QueryDriveType())
-                {
-                    if (form.ShowDialog() == DialogResult.OK)
-                    {
-                        returnValue = form.returnValue;
-                    }
-                }
-            }
-
-            return returnValue;
-        }
-
-        /* DOS Boot
-         * 
-         * Deploys DOS and makes it bootable on the drive specified
-         * i.e. "D:"
-         * 
-         * */
-        private void DOSBoot(string drive)
-        {
-            string[] batchLines = {
-                "pushd %~dp0",
-                @"cd /d syslinux-6.03\bios\win32",
-                "syslinux.exe -fma " +drive,
-                "cd..",
-                "cd..",
-                "cd..",
-                @"xcopy DOS\* " +drive+@" /e /h /i /y /c"};
-            drive = drive.Split(':')[0];
-            createFile("DOS" + drive + ".bat", batchLines);
-            runBATFile("DOS" + drive + ".bat", true);
-
-        }
-
-        /*Activate Drive 
-         * sets the drive to be active (bootable) its an easy enough operation 
-         * that its typically run always just in case
-        **/
-        private void activateDrive(string drive, string number)
-        {
-            string[] batchLines = {
-                "pushd %~dp0",
-                "diskpart /s activate"+drive+".txt > activatelog"+drive.Split(':')[0]+".txt" };
-            string[] textLines = {
-                "select disk " + number,
-                "select partition 1",
-                "active" };
-            drive = drive.Split(':')[0];
-            createFile("activate" + drive + ".txt", textLines);
-            createFile("activate" + drive + ".bat", batchLines);
-            runBATFile("activate" + drive + ".bat", false);
-        }
-
-        /*Foramt Drive
-         * Formats the drive in question, this will (hopefully) be rarely 
-         * necessary as most drives are already fat32's that are mbr
-         * takes a drive letter and number i.e. "D:","2"
-         * 
-         **/
-
-        private void formatDrive(string letter, string number)
-        {
-            string partitionStyle = "convert mbr";
-            string[] batchLines = {
-                "pushd %~dp0",
-                "diskpart /s clean"+number+".txt > cleanlog"+number+".txt" };
-            string[] textLines = {
-                "select disk " + number,
-                "clean",
-                partitionStyle,
-                "create partition primary",
-                "select partition 1",
-                "active",
-                "format fs = fat32 quick",
-                "assign letter="+letter.Remove(1) };
-            createFile("clean" + number + ".txt", textLines);
-            createFile("clean" + number + ".bat", batchLines);
-            runBATFile("clean" + number + ".bat", true);
-
-
-        }
-
-        /* Clean Drive
-         * Cleans all files off of the drive in question, this can be helpful when
-         * loading two different versions of the same bios on one drive and is instigated
-         * using the "always clean" button
-         * 
-         * */
-        private void cleanDrive(string drive)
-        {
-            progressBar.Value += (int)increment;
-            Application.DoEvents();
-            string[] cmd =
-            {
-                "del "+drive+@"\* /s /q",
-                "rmdir /s/q "+drive
-            };
-            drive = drive.Split(':')[0];
-            createFile("clear" + drive + ".bat", cmd);
-            runBATFile("clear" + drive + ".bat", false);
-        }
-
-        /*loads drives differently depending on type and style
-         * takes a drive, type and drive number, i.e
-         * loadDDrive("D:","DOS","2")
-         * */
-        private void loadDrive(string drive, string Type, string number)
-        {
-            if (Type.Equals("DOS"))
-            {
-                activateDrive(drive, number);
-                DOSBoot(drive);
-                generateAUTOEXEC(drive);
-            }
-            if (Type.Equals("UEFI"))
-            {
-                activateDrive(drive, number);
-            }
-            copySelectedFile(drive);
-
-        }
-
-        /* Format Drives
-         * Simply formats all drives, a nice feature just to have available for various reasons
-         * 
-         * */
-        private void FormatDrives(object sender, EventArgs e)
-        {
-            buttonEnabler(false);
-            DriveInfo[] allDrives = DriveInfo.GetDrives();
-            console.Text += "Formating all available thumb drives...\n";
-            int drive = 0;
-            progressBar.Value = 10;
-            foreach (DriveInfo D in allDrives)
-            {
-                //determine if thumbdrive
-                if (D.DriveType.ToString().Equals("Removable"))
-                {
-                    //gather info
-                    overrideAllRights(D.Name);
-                    string driveLetter = D.Name.ToString().Remove(2);
-                    console.Text += "Formatting Drive " + driveLetter + " ...\n";
-                    formatDrive(driveLetter, drive.ToString());
-                }
-                drive++;
-            }
-            progressBar.Value = 100;
-            buttonEnabler(true);
-            console.Text += "Process Complete!\n";
-        }
-
-        /* Drive Display
- * 
- * Gathers all drives continuosly and displays them, this is primarily used
- * to determine when any drive is not functioning properly, disconnecting the drives one 
- * one by one watching the letters go away.
- * 
- * This is designed to be used in threading use cases
- * */
-        public void driveDisplay(object sender, DoWorkEventArgs e)
-        {
-            while (true)
-            {
-                DriveInfo[] allDrives = DriveInfo.GetDrives();
-                string display = "Currently Inserted Drives: ";
-                foreach (DriveInfo D in allDrives)
-                {
-                    //determine if thumbdrive
-                    if (D.DriveType.ToString().Equals("Removable"))
-                    {
-                        display += D.Name.Remove(1) + " ";
-                    }
-                }
-                Thread.Sleep(100);
-                checkDrivesWorker.ReportProgress(0, display);
-            }
-
-        }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         /*string to bool
         *converts plain text into boolean values
         * importantly it only looks for "true" and assumes all else is false
@@ -987,24 +318,7 @@ namespace QuickFlash
             createFile(name, consoleText);
         }
 
-        /* Output Log
-         * outputs a specified log to the console, typically only used when
-         * the "show full log" option is selected, and can be used to view progress or errors
-         * takes a file and a line starting point to avoid uneccesary headers
-         * i.e. "log.txt",4
-         * 
-         * */
-        private void outputLog(string file, int start)
-        {
-            if (File.Exists(file))
-            {
-                string[] lines = File.ReadAllLines(file);
-                for (int i = start; i < lines.Length; i++)
-                {
-                    console.Text += lines[i] + "\n";
-                }
-            }
-        }
+        
         
         //Scrolls console automatically to keep the most relevent info visable
         private void consoleTextChanged(object sender, EventArgs e)
@@ -1211,5 +525,37 @@ namespace QuickFlash
         }
 
 
+
+        /* Drive Display
+* 
+* Gathers all drives continuosly and displays them, this is primarily used
+* to determine when any drive is not functioning properly, disconnecting the drives one 
+* one by one watching the letters go away.
+* 
+* This is designed to be used in threading use cases
+* */
+        public void driveDisplay(object sender, DoWorkEventArgs e)
+        {
+            while (true)
+            {
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
+                string display = "Currently Inserted Drives: ";
+                foreach (DriveInfo D in allDrives)
+                {
+                    //determine if thumbdrive
+                    if (D.DriveType.ToString().Equals("Removable"))
+                    {
+                        display += D.Name.Remove(1) + " ";
+                    }
+                }
+                Thread.Sleep(100);
+                checkDrivesWorker.ReportProgress(0, display);
+            }
+
+        }
     }
 }
+
+
+
+

@@ -64,7 +64,7 @@ namespace QuickFlash
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.label2.ForeColor = System.Drawing.SystemColors.ControlDark;
             this.label2.Location = new System.Drawing.Point(23, 65);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(151, 15);
@@ -73,6 +73,7 @@ namespace QuickFlash
             // 
             // magicDirectoryBox
             // 
+            this.magicDirectoryBox.Enabled = false;
             this.magicDirectoryBox.Location = new System.Drawing.Point(180, 63);
             this.magicDirectoryBox.Name = "magicDirectoryBox";
             this.magicDirectoryBox.Size = new System.Drawing.Size(143, 20);
