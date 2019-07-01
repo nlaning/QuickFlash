@@ -62,7 +62,7 @@ namespace QuickFlash
             makeLink(magicDrivePath);
             listDirectory(fileViewer,path/*, "ASrock"*/);
             //searchFileViewer("");
-           
+            getSheetData();
             console.Text += workingDirectory;
         }
 
