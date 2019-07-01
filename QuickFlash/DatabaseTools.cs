@@ -13,10 +13,10 @@ namespace QuickFlash
     {
         static string[] Scopes = { SheetsService.Scope.SpreadsheetsReadonly };
         //string sheetID = "11dac86fDnD7p-FutWQHP3l7voyMNDYLXhyIId0f44AU" ;
-        string sheetID = "1_JajCnNTNvtMq5a0oiuTxIY0eVp82YfXY2EQUuuwCqg";
+        string sheetID = "1_JajCnNTNvtMq5a0oiuTxIY0eVp82YfXY2EQUuuwCqg";//sheet id that contains the BIOS data
         string bios_task_and_products = "bios_tasks_and_products!A2:C";
         string bioses = "bioses!A2:K";
-        IList<IList<Object>> bioses_data, bios_task_and_products_data;
+        IList<IList<Object>> bioses_data, bios_task_and_products_data;//making info global for ease of use
         IList<IList<Object>> ThumbdriveData;
         SheetsService service;
         UserCredential credentials;
@@ -45,7 +45,6 @@ namespace QuickFlash
 
             }
         }
-
         public void createAPI()
         {
             // Create Google Sheets API service.
@@ -68,7 +67,7 @@ namespace QuickFlash
             bios_task_and_products_data = bios_task_and_products_response.Values;
         }
         /**
-         * removes Duplicated Data from bioses sheet retrieved
+         * removes Duplicated Data from BIOS sheet retrieved
          * */
         public void cleanData()
         {
@@ -77,7 +76,6 @@ namespace QuickFlash
             {
                 
                 string taskID = bioses_data[finalValue][2].ToString();
-                console.Text += taskID + "\n";
                 for (int j= finalValue - 1; j >= 0; j--)
                 {
                     if(bioses_data[j][2].ToString().Equals(taskID))

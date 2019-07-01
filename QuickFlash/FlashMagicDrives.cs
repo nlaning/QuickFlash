@@ -13,6 +13,7 @@ namespace QuickFlash
             //create File Structer of files/folders
             foreach (var row in bioses_data)
             {
+                //gathering all necessary info
                 string type = row[5].ToString(),
                     thumbdriveFolderStructure = "",
                     filePath = row[8].ToString(),
@@ -22,6 +23,7 @@ namespace QuickFlash
                     manufacturer = row[4].ToString(),
                     files = row[9].ToString();
                 List<string> filesToRun = new List<string>();
+                //cleans data for easier entry ["bios1","bios2"] -> bios1, bios2
                 files = files.Replace("\"", "");
                 files = files.Replace("]", "");
                 files = files.Replace("[", "");
@@ -36,8 +38,44 @@ namespace QuickFlash
                         //if task ID's Match
                         if (task[0].Equals(taskID))
                         {
-                            //add sku
-                            SKUS.Add(SKU);
+                            switch (type.ToUpper())
+                            {
+
+                                case ("DOS"):
+                                    thumbdriveFolderStructure = driveLetter + "\\" + type + '\\' + taskID;
+                                    generateSKUToBIOSFile(filePath, type, SKU, taskID, TATask, manufacturer, version, filesToRun, driveLetter);
+                                    break;
+                                case ("INSTANT"):
+                                    string ID = row[0].ToString();
+                                    string notes = row[10].ToString();
+                                    thumbdriveFolderStructure = driveLetter + "\\" + type + '\\' + ID + '_' + version + '_' + notes + "\\";
+                                    foreach (string file in filesToRun)
+                                    {
+                                        FileInfo thumbdriveCurrentFile = new FileInfo(thumbdriveFolderStructure + file);
+
+                                        if (!thumbdriveCurrentFile.Exists)
+                                        {
+
+                                            string[] copy = { "del " + thumbdriveFolderStructure, "xcopy \"" + filePath + "\\*" + "\" " + "\"" + thumbdriveFolderStructure + "\"  /h /i /y /c" };
+                                            createFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", copy);
+                                            runBATFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", false);
+                                        }
+                                        else
+                                        {
+                                            if (!compareFiles(thumbdriveFolderStructure + file, filePath + "\\" + file))
+                                            {
+                                                string[] copy = { "xcopy \"" + filePath + "\\" + file + "\" " + "\"" + thumbdriveFolderStructure + "\"  /h /i /y /c" };
+                                                createFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", copy);
+                                                runBATFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", false);
+                                            }
+                                        }
+                                    }
+                                    break;
+                                case ("EFI"):
+                                    thumbdriveFolderStructure = driveLetter + "\\" + type + '\\' + taskID;
+                                    generateSKUToBIOSFile(filePath, type, SKU, taskID, TATask, manufacturer, version, filesToRun, driveLetter);
+                                    break;
+                            }
                         }
 
                     }
@@ -45,47 +83,6 @@ namespace QuickFlash
                     {
                         if (fullLogButton.Checked) console.Text += "Exception Caught: " + E.ToString() + "\n";
                     }
-                }
-                foreach (string SKU in SKUS) {
-                    switch (type.ToUpper())
-                    {
-
-                        case ("DOS"):
-                            thumbdriveFolderStructure = driveLetter+"\\"+type + '\\' + taskID;
-                            generateSKUToBIOSFile(filePath,type, SKU, taskID, TATask, manufacturer, version, filesToRun, driveLetter);
-                            break;
-                        case ("INSTANT"):
-                            string ID = row[0].ToString();
-                            string notes = row[10].ToString();
-                            thumbdriveFolderStructure = driveLetter + "\\"+type + '\\' + ID + '_' + version + '_' + notes+"\\";
-                            foreach (string file in filesToRun)
-                            {
-                                FileInfo thumbdriveCurrentFile = new FileInfo(thumbdriveFolderStructure + file);
-
-                                if (!thumbdriveCurrentFile.Exists)
-                                {
-
-                                    string[] copy = { "del " + thumbdriveFolderStructure, "xcopy \"" + filePath + "\\*" + "\" " + "\"" + thumbdriveFolderStructure + "\"  /h /i /y /c" };
-                                    createFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", copy);
-                                    runBATFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", false);
-                                }
-                                else
-                                {
-                                    if (!compareFiles(thumbdriveFolderStructure + file, filePath + "\\" + file))
-                                    {
-                                        string[] copy = { "xcopy \"" + filePath + "\\" + file + "\" " + "\"" + thumbdriveFolderStructure + "\"  /h /i /y /c" };
-                                        createFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", copy);
-                                        runBATFile(file.Split('.')[0] + "_" + driveLetter.Remove(1) + ".bat", false);
-                                    }
-                                }
-                            }
-                            break;
-                        case ("EFI"):
-                            thumbdriveFolderStructure = driveLetter + "\\"+type + '\\' + taskID;
-                            generateSKUToBIOSFile(filePath,type, SKU, taskID, TATask, manufacturer, version, filesToRun,driveLetter);
-                            break;
-                    }
-
                 }
             }
 
@@ -192,6 +189,7 @@ namespace QuickFlash
                     {
                         runFiles[i] = filesToRun[i];
                     }
+                    //adds version to file
                     runFiles[filesToRun.Count] = "rem " + version;
                     magicDrivesWorker.ReportProgress(0, SKU);
                     break;
@@ -252,32 +250,7 @@ namespace QuickFlash
                     string driveLetter = D.Name.ToString().Remove(2);
                     magicDrivesWorker.ReportProgress(progress, "loading Magic Drive " + driveLetter + " with necessary components...");
                     //loading drive with components
-
-
                     createFileStructure(driveLetter);
-                    //List<string> excludedFiles = new List<string>();
-                    //List<string> driveFiles = getFilePath(driveLetter + @"\");
-                    //foreach (string file in driveFiles)
-                    //{
-                    //    if (compareFiles(file, magicDrivePath + @"\" + file.Remove(0, 2)))
-                    //    {
-                    //        magicDrivesWorker.ReportProgress(progress, magicDrivePath + @"\" + file.Remove(0, 2));
-                    //        string[] fullFilePath = file.Split('\\');
-                    //        excludedFiles.Add(fullFilePath[fullFilePath.Length - 1]);
-                    //        magicDrivesWorker.ReportProgress(progress, fullFilePath[fullFilePath.Length - 1]);
-                    //    }
-                    //}
-                    //loadDrive(driveLetter, "INSTANT", drive.ToString());
-                    //if (fullLogButton.Checked) magicDrivesWorker.ReportProgress(progress, "moving files from " + fullPath + " ...");
-                    //string[] cmd = { @"xcopy " + '"' + magicDrivePath + @"\" + "*" + '"' + " " + driveLetter + @"\ /e /h /i /y /c /EXCLUDE:exclude" + driveLetter.Split(':')[0] + ".txt > log" + driveLetter.Split(':')[0] + ".txt" };
-                    //createFile("copy" + driveLetter.Split(':')[0] + ".bat", cmd);
-                    //string[] excludedFilesArray = new string[excludedFiles.Count];
-                    //for (int i = 0; i < excludedFiles.Count; i++)
-                    //{
-                    //    excludedFilesArray[i] = excludedFiles[i];
-                    //}
-                    //createFile("exclude" + driveLetter.Split(':')[0] + ".txt", excludedFilesArray);
-                    //runBATFile("copy" + driveLetter.Split(':')[0] + ".bat", false);
 
                 }
                 drive++;
@@ -286,31 +259,13 @@ namespace QuickFlash
             magicDrivesWorker.ReportProgress(progress, "Waiting for all files to transfer...");
             //finishing up, waits for cmd to stop proccessing
             waitForFinish(progress, magicDrivesWorker);
-            //magicDrivesWorker.ReportProgress(progress, "Removing old Files...");
-            //removeOldFiles(magicDrivePath, "none", progress, magicDrivesWorker);
-            //waitForFinish(progress, magicDrivesWorker);
         }
 
         private void magicDrivesClick(object sender, EventArgs e)
         {
             buttonEnabler(false);
+            getSheetData();
             console.Text += "building pathway\n";
-            //if empty prompt for a new directory
-            //if (magicDrivePath.Equals("") || !Directory.Exists(magicDrivePath))
-            //{
-            //    DialogResult result = folderBrowser.ShowDialog();
-            //    if (result == DialogResult.OK)
-            //    {
-            //        console.Text += "New Magic Drive directory selected at:\n" + folderBrowser.SelectedPath + "\n";
-            //        magicDrivePath = folderBrowser.SelectedPath;
-            //    }
-            //    else
-            //    {
-            //        buttonEnabler(true);
-            //        return;
-            //    }
-            //}
-
             magicDrivesWorker.RunWorkerAsync();
         }
     }

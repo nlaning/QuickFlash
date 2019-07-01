@@ -38,7 +38,6 @@ namespace QuickFlash
 
     {
         string workingDirectory = System.Reflection.Assembly.GetExecutingAssembly().Location.Remove(System.Reflection.Assembly.GetExecutingAssembly().Location.Length-14);
-
         double increment = 0; //for use in progress bar
         string path = ""; //starting path.
         string magicDrivePath = ""; //for use in magic drives
@@ -53,8 +52,7 @@ namespace QuickFlash
         * first opening the program, (like main)
         * */
         public MainWindow()
-        {
-            
+        {           
             clearOutCMDProccesses();
             InitializeComponent();
             loadWorkers();
@@ -64,10 +62,8 @@ namespace QuickFlash
             makeLink(magicDrivePath);
             listDirectory(fileViewer,path/*, "ASrock"*/);
             //searchFileViewer("");
-            getSheetData();
+           
             console.Text += workingDirectory;
-
-
         }
 
         private void flashDrivesClick(object sender, EventArgs e)
