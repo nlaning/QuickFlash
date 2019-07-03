@@ -231,6 +231,45 @@ public static class FileTools
 
     }
 
+    /*
+     * needs to not contain new name, for example
+     * 
+     * */
+    public static void copyDirectory(string sourceDirectory,string destinationDirectory)
+    {
+        Directory.CreateDirectory(destinationDirectory);
+        List<string> directories = new List<string>(Directory.EnumerateDirectories(sourceDirectory));
+        List<string> files = new List<string>(Directory.EnumerateFiles(sourceDirectory));
+        foreach(string file in files)
+        {
+            copyFile(file, destinationDirectory);
+        }
+        foreach(string directory in directories)
+        {
+            string[] splitSource = directory.Split('\\');
+            string DirectoryName = splitSource[splitSource.Length - 1];
+            copyDirectory(directory, destinationDirectory +'\\'+ DirectoryName);
+        }
+    }
+    /*
+     * needs to not contain new name, for example
+     * 
+     * */
+    public static void copyFile(string sourceFile, string destinationFolder)
+    {
+        try
+        {
 
+            string[] splitSource = sourceFile.Split('\\');
+            string fileName = splitSource[splitSource.Length - 1];
+            if(!File.Exists(destinationFolder + "\\" + fileName)) File.Copy(sourceFile, destinationFolder + "\\" + fileName);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            //File.
+            //File.SetAttributes(sourceFile, FileAttributes.Normal);
+            //copyFile(sourceFile,  destinationFolder);
+        }
+    }
 
 }

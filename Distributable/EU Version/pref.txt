@@ -1,0 +1,7 @@
+rootDirectory?\\netherlands\Files\Assembly\BIOS Updates
+manualBoot?False
+fullLog?False
+alwaysClean?True
+magicDirectory?
+Directorylimit?200000000
+USpath?\\fileserver\Assembly\BIOS Updates

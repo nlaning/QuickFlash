@@ -41,18 +41,20 @@ namespace QuickFlash
         double increment = 0; //for use in progress bar
         string path = ""; //starting path.
         string magicDrivePath = ""; //for use in magic drives
-        string fullPath = ""; //full path of file being moved
+        string fullPath = "", EUpath=""; //full path of file being moved
         string fileDirectoryMissingPath= "";
         long limit = 200000000;
         TreeNode directoryList = new TreeNode();
-        private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker;
+        private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker, updateBiosFolder;
         string preferencesFile = "pref.txt"; //just incase a name change is necessary
-        string version = "1.51"; //probably should be replaced for proper versioning...
+        string version = "1.60"; //probably should be replaced for proper versioning...
         /* Main Window
         * first opening the program, (like main)
         * */
         public MainWindow()
-        {           
+        {
+
+           
             clearOutCMDProccesses();
             InitializeComponent();
             loadWorkers();
@@ -60,10 +62,10 @@ namespace QuickFlash
             console.Text += "Welcome to Quick Flash! (" + version + ")\nPlease select a file to begin or press " + '"' + "help" + '"' + "\n";
             loadPreferences("Pref.txt");
             makeLink(magicDrivePath);
-            listDirectory(fileViewer,path/*, "ASrock"*/);
-            //searchFileViewer("");
+            listDirectory(fileViewer,path);
             getSheetData();
-            console.Text += workingDirectory;
+            updateBiosFolder.RunWorkerAsync();
+
         }
 
         private void flashDrivesClick(object sender, EventArgs e)
@@ -86,7 +88,7 @@ namespace QuickFlash
 
         /* Flash Drives
         *   ________________
-        *  /               /----. 
+        *  /               /----.
         * /_______________/____/101101010010100101010001010010110101010101
         * |_______________|----'
         * 
@@ -370,6 +372,16 @@ namespace QuickFlash
                                 console.Text += "Error in preferences file, the limit is not inputed correctly";
                             }
                             break;
+                        case (7):
+                            try
+                            {
+                                limit = Convert.ToInt64(s.Split('?')[1]);
+                            }
+                            catch (FormatException)
+                            {
+                                EUpath = s.Split('?')[1];
+                            }
+                            break;
                     }
                 }
             }
@@ -398,7 +410,8 @@ namespace QuickFlash
                 "fullLog?"+fullLogButton.Checked,
                 "alwaysClean?"+alwaysCleanButton.Checked,
                 "magicDirectory?"+magicDrivePath,
-                "Directorylimit?"+limit
+                "Directorylimit?"+limit,
+                 "USpath?"+EUpath
             };
             createFile(preferencesFile, preferences);
         }
@@ -450,6 +463,12 @@ namespace QuickFlash
             checkDrivesWorker.DoWork += driveDisplay;
             checkDrivesWorker.ProgressChanged += refreshDriveDisplay;
             checkDrivesWorker.RunWorkerAsync();
+            //folder updating workers init
+            updateBiosFolder = new BackgroundWorker();
+            updateBiosFolder.WorkerReportsProgress = true;
+            updateBiosFolder.DoWork += EUsyncBiosFolder;
+            //updateBiosFolder.ProgressChanged += refreshDriveDisplay;
+            
             //flashing worker init
             flashDrivesWorker = new BackgroundWorker();
             flashDrivesWorker.WorkerReportsProgress = true;
@@ -519,7 +538,6 @@ namespace QuickFlash
             label1.Text = e.UserState as string;
 
         }
-
 
 
         /* Drive Display
