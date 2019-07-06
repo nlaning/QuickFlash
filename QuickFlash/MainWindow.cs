@@ -34,27 +34,25 @@ using System.Windows.Forms;
 using static FileTools;
 namespace QuickFlash
 {
-    public partial class MainWindow : Form
-
-    {
+    public partial class MainWindow : Form{
         string workingDirectory = System.Reflection.Assembly.GetExecutingAssembly().Location.Remove(System.Reflection.Assembly.GetExecutingAssembly().Location.Length-14);
         double increment = 0; //for use in progress bar
-        string path = ""; //starting path.
+        bool EU = false;
+        string path  = "", EUpath = ""; //starting path.
         string magicDrivePath = ""; //for use in magic drives
-        string fullPath = "", EUpath=""; //full path of file being moved
+        string fullPath= ""/*, EUpath=""*/; //full path of file being moved
         string fileDirectoryMissingPath= "";
         long limit = 200000000;
+        int serverPollingRate = 500;
         TreeNode directoryList = new TreeNode();
         private BackgroundWorker checkDrivesWorker,flashDrivesWorker, magicDrivesWorker, updateBiosFolder;
         string preferencesFile = "pref.txt"; //just incase a name change is necessary
-        string version = "1.60"; //probably should be replaced for proper versioning...
+        string version = "1.62"; //probably should be replaced for proper versioning...
         /* Main Window
         * first opening the program, (like main)
         * */
         public MainWindow()
         {
-
-           
             clearOutCMDProccesses();
             InitializeComponent();
             loadWorkers();
@@ -64,7 +62,7 @@ namespace QuickFlash
             makeLink(magicDrivePath);
             listDirectory(fileViewer,path);
             getSheetData();
-            updateBiosFolder.RunWorkerAsync();
+            if(!EUpath.Equals("")) updateBiosFolder.RunWorkerAsync();
 
         }
 
@@ -260,7 +258,22 @@ namespace QuickFlash
 
         }
 
-
+        public long getlimit()
+        {
+            return limit;
+        }
+        public string getfullPath()
+        {
+            return path;
+        }
+        public string getEUPath()
+        {
+            return EUpath;
+        }
+        public long getserverPollingRate()
+        {
+            return serverPollingRate;
+        }
         private void makeLink(string address)
         {
             if (!magicDrivePath.Equals("")) { 
@@ -346,7 +359,7 @@ namespace QuickFlash
                     {
                         case (1):
                             path = s.Split('?')[1];
-                            if (path.Equals("")) browseForFolder(this, null);
+                            if (path.Equals("")) displayPreferences(this, null);
                             break;
                         case (2):
                             manualBootSelectButton.Checked = stringToBool(s.Split('?')[1]);
@@ -358,10 +371,6 @@ namespace QuickFlash
                             alwaysCleanButton.Checked = stringToBool(s.Split('?')[1]);
                             break;
                         case (5):
-                            magicDrivePath = s.Split('?')[1];
-
-                            break;
-                        case (6):
                             try
                             {
                                 limit = Convert.ToInt64(s.Split('?')[1]);
@@ -372,14 +381,18 @@ namespace QuickFlash
                                 console.Text += "Error in preferences file, the limit is not inputed correctly";
                             }
                             break;
+                        case (6):
+                            EUpath = s.Split('?')[1];
+                            break;
                         case (7):
                             try
                             {
-                                limit = Convert.ToInt64(s.Split('?')[1]);
+                                serverPollingRate = Convert.ToInt32(s.Split('?')[1]);
                             }
                             catch (FormatException)
                             {
-                                EUpath = s.Split('?')[1];
+                                serverPollingRate = 500;
+                                console.Text += "Error in preferences file, the limit is not inputed correctly";
                             }
                             break;
                     }
@@ -387,7 +400,8 @@ namespace QuickFlash
             }
             else
             {
-                browseForFolder(this, null);
+                //browseForFolder(this, null);
+                displayPreferences(this, null);
                 savePreferences(this, null);
                 
             }
@@ -409,9 +423,9 @@ namespace QuickFlash
                 "manualBoot?"+manualBootSelectButton.Checked,
                 "fullLog?"+fullLogButton.Checked,
                 "alwaysClean?"+alwaysCleanButton.Checked,
-                "magicDirectory?"+magicDrivePath,
                 "Directorylimit?"+limit,
-                 "USpath?"+EUpath
+                 "USpath?"+EUpath,
+                 "serverPollingRate?"+serverPollingRate
             };
             createFile(preferencesFile, preferences);
         }

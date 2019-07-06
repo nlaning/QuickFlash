@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using static FileTools;
 namespace QuickFlash
 {
@@ -8,10 +7,11 @@ namespace QuickFlash
     {
         public void EUsyncBiosFolder(object sender, DoWorkEventArgs e) 
         {
+            int delay = System.Convert.ToInt32(serverPollingRate);
             while (true)
             {
                 copyDirectory(EUpath, path);
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(delay);
             }
             //all child folders to continue forward onto
             //List<string> childFolders = union(strippedDestinationDirectories, strippedSourceDirectories); 

@@ -24,13 +24,14 @@ namespace QuickFlash
          * */
         private void displayPreferences(object sender, EventArgs e)
         {
-            using (var form = new Preferences(path, magicDrivePath, limit))
+            using (var form = new Preferences(this))
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
                     path = form.newBiosLocation;
-                    magicDrivePath = form.newMagicLocation;
                     limit = form.newByteLimit;
+                    EUpath = form.EUpath;
+                    serverPollingRate = form.serverPollingRate;
                     listDirectory(fileViewer, path);
                     savePreferences(this, null);
 
